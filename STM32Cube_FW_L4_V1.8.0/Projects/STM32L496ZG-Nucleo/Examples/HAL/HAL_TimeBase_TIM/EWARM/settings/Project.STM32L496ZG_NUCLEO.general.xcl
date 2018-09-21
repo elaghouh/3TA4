@@ -1,0 +1,15 @@
+"C:\Users\frq09495\AppData\Roaming\IAR Systems\Embedded Workbench 7.5\arm\bin\armproc.dll" 
+
+"C:\Users\frq09495\AppData\Roaming\IAR Systems\Embedded Workbench 7.5\arm\bin\armstlink2.dll" 
+
+"C:\Data\STM32\STM32Cube_FW_L4\Firmware\Projects\STM32L496ZG-Nucleo\Examples\HAL\HAL_TimeBase_TIM\EWARM\STM32L496ZG_NUCLEO\Exe\Project.out" 
+
+--plugin "C:\Users\frq09495\AppData\Roaming\IAR Systems\Embedded Workbench 7.5\arm\bin\armbat.dll" 
+
+--device_macro "C:\Users\frq09495\AppData\Roaming\IAR Systems\Embedded Workbench 7.5\arm\config\debugger\ST\STM32L4xx.dmac" 
+
+--flash_loader "C:\Users\frq09495\AppData\Roaming\IAR Systems\Embedded Workbench 7.5\arm\config\flashloader\ST\FlashSTM32L4xxxG.board" 
+
+
+
+
