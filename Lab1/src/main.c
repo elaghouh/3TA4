@@ -66,13 +66,15 @@ this starter project:
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
-TIM_HandleTypeDef    Tim3_Handle,Tim4_Handle;
+TIM_HandleTypeDef    Tim2_Handle,Tim3_Handle,Tim4_Handle;
 TIM_OC_InitTypeDef Tim4_OCInitStructure;
 uint16_t Tim3_PrescalerValue,Tim4_PrescalerValue;
+uint32_t Tim2_PrescalerValue;
 
 __IO uint16_t Tim4_CCR; // the pulse of the TIM4
 __O uint8_t factor = 0;
-__O uint8_t LEDcount = 0;
+__O uint8_t LEDCount = 0;
+__O uint8_t selCount = 0;
 
 
 
@@ -87,6 +89,7 @@ DigitPosition_Typedef charPosition;
 void SystemClock_Config(void);
 static void EXTI0_Config(void);
 static void Error_Handler(void);
+void TIM2_Config(void);
 void TIM3_Config(void);
 void TIM4_Config(void);
 void TIM4_OC_Config(void);
@@ -137,11 +140,15 @@ int main(void)
 	 
   //EXTI0_Config();
 
-	TIM3_Config();
+	TIM2_Config();
+	
+	//TIM3_Config();
 	
 	TIM4_Config();
 	
 	Tim4_CCR=5000;       //2 s to fire an interrupt.
+	
+	TIM4_OC_Config();
 
 	//BSP_LCD_GLASS_ScrollSentence(uint8_t* ptr, uint16_t nScroll, uint16_t ScrollSpeed);
 		BSP_LCD_GLASS_ScrollSentence((uint8_t*) "  mt3ta4 lab1 starter", 2, 200);
@@ -154,25 +161,29 @@ int main(void)
   }
 }
 
-void blink_LED(void) 
+void blink_2LED(void) 
 {
 
-	switch(LEDcount) {
+	switch(LEDCount) {
 		case 0:
-			BSP_LED_Toggle(LED4);
+			BSP_LED_Off(LED5);
+			BSP_LED_On(LED4);
 		  break;
 		case 1:
-			BSP_LED_Toggle(LED4);
+			BSP_LED_Off(LED5);
+			BSP_LED_Off(LED4);
 		  break;
 		case 2:
-			BSP_LED_Toggle(LED5);
+			BSP_LED_On(LED5);
+			BSP_LED_Off(LED4);
 		  break;
 		case 3:
-			BSP_LED_Toggle(LED5);
+			BSP_LED_Off(LED5);
+			BSP_LED_Off(LED4);
 		  break;
 	}
 	
-	LEDcount = (LEDcount + 1)%4;
+	LEDCount = (LEDCount + 1)%4;
 }
 	
 
@@ -270,6 +281,33 @@ static void EXTI0_Config(void)
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 }
 */
+
+void  TIM2_Config(void)
+{
+  Tim2_PrescalerValue = (uint32_t) (SystemCoreClock/ 10000) - 1;
+  
+  /* Set TIM2 instance */
+  Tim2_Handle.Instance = TIM2; //TIM2 is defined in stm32f429xx.h
+ 
+  Tim2_Handle.Init.Period = 5000 - 1;
+  Tim2_Handle.Init.Prescaler = Tim2_PrescalerValue;
+  Tim2_Handle.Init.ClockDivision = 0;
+  Tim2_Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
+  if(HAL_TIM_Base_Init(&Tim2_Handle) != HAL_OK) // this line need to call the callback function _MspInit() in stm32f4xx_hal_msp.c to set up peripheral clock and NVIC..
+  {
+    /* Initialization Error */
+    Error_Handler();
+  }
+  
+  /*##-2- Start the TIM Base generation in interrupt mode ####################*/
+  /* Start Channel1 */
+  if(HAL_TIM_Base_Start_IT(&Tim2_Handle) != HAL_OK)   //the TIM_XXX_Start_IT function enable IT, and also enable Timer
+																											//so do not need HAL_TIM_BASE_Start() any more.
+  {
+    /* Starting Error */
+    Error_Handler();
+  }
+}
 
 void  TIM3_Config(void)
 {
@@ -381,16 +419,18 @@ void  TIM4_OC_Config(void)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   switch (GPIO_Pin) {
-			case GPIO_PIN_0: 		 //SEL_JOY_PIN    
-							TIM4_OC_Config();
+			case GPIO_PIN_0: 		 //SEL_JOY_PIN   
+							BSP_LED_Off(LED4);
+							BSP_LED_Off(LED5);
+							selCount = (selCount+1)%2;
 							/* Toggle LED4 */
 							//BSP_LED_Toggle(LED4);
 							//BSP_LCD_GLASS_DisplayChar((uint8_t *)'A', singlePoint, doublePoint, 2);
 							BSP_LCD_GLASS_Clear();
 							BSP_LCD_GLASS_DisplayString((uint8_t*)"select");		
 
-							factor = (factor+1)%2;
-							__HAL_TIM_SET_COMPARE(&Tim4_Handle, TIM_CHANNEL_1, Tim4_CCR/(factor+1));
+							//factor = (factor+1)%2;
+							//__HAL_TIM_SET_COMPARE(&Tim4_Handle, TIM_CHANNEL_1, Tim4_CCR/(factor+1));
 							break;	
 			case GPIO_PIN_1: //LEFT_JOY_PIN  
 							/* Toggle LED4 */
@@ -442,8 +482,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   //see  stm32fxx_ha
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_hal_tim.c for different callback function names. 
 {																																//for timer4 
 	//	if ((*htim).Instance==TIM4)
-			 blink_LED();
-		
+		switch (selCount) {
+			case 0: 
+				BSP_LED_Toggle(LED5);
+				break;
+			case 1:
+				blink_2LED();
+				break;
+		}
 		//clear the timer counter!  in stm32f4xx_hal_tim.c, the counter is not cleared after  OC interrupt
 		__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h
 
