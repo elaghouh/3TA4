@@ -72,6 +72,7 @@ uint16_t Tim3_PrescalerValue,Tim4_PrescalerValue;
 
 __IO uint16_t Tim4_CCR; // the pulse of the TIM4
 __O uint8_t factor = 0;
+__O uint8_t LEDcount = 0;
 
 
 
@@ -140,8 +141,7 @@ int main(void)
 	
 	TIM4_Config();
 	
-	Tim4_CCR=20000;       //2 s to fire an interrupt.
-	TIM4_OC_Config();
+	Tim4_CCR=5000;       //2 s to fire an interrupt.
 
 	//BSP_LCD_GLASS_ScrollSentence(uint8_t* ptr, uint16_t nScroll, uint16_t ScrollSpeed);
 		BSP_LCD_GLASS_ScrollSentence((uint8_t*) "  mt3ta4 lab1 starter", 2, 200);
@@ -154,7 +154,30 @@ int main(void)
   }
 }
 
+void blink_LED(void) 
+{
+
+	switch(LEDcount) {
+		case 0:
+			BSP_LED_Toggle(LED4);
+		  break;
+		case 1:
+			BSP_LED_Toggle(LED4);
+		  break;
+		case 2:
+			BSP_LED_Toggle(LED5);
+		  break;
+		case 3:
+			BSP_LED_Toggle(LED5);
+		  break;
+	}
+	
+	LEDcount = (LEDcount + 1)%4;
+}
+	
+
 /**
+
   * @brief  System Clock Configuration
   *         The system Clock is configured as follows :
   *            System Clock source            = MSI
@@ -353,10 +376,13 @@ void  TIM4_OC_Config(void)
   * @param GPIO_Pin: Specifies the pins connected EXTI line
   * @retval None
   */
+
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   switch (GPIO_Pin) {
-			case GPIO_PIN_0: 		 //SEL_JOY_PIN    			
+			case GPIO_PIN_0: 		 //SEL_JOY_PIN    
+							TIM4_OC_Config();
 							/* Toggle LED4 */
 							//BSP_LED_Toggle(LED4);
 							//BSP_LCD_GLASS_DisplayChar((uint8_t *)'A', singlePoint, doublePoint, 2);
@@ -416,7 +442,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   //see  stm32fxx_ha
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_hal_tim.c for different callback function names. 
 {																																//for timer4 
 	//	if ((*htim).Instance==TIM4)
-			 BSP_LED_Toggle(LED5);
+			 blink_LED();
 		
 		//clear the timer counter!  in stm32f4xx_hal_tim.c, the counter is not cleared after  OC interrupt
 		__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this maro is defined in stm32f4xx_hal_tim.h
