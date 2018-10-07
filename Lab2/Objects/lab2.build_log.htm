@@ -28,10 +28,15 @@ Project File Date:  06/08/2017
 *** Using Compiler 'V5.06 update 4 (build 422)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'stm32L476DISCO'
 compiling main.c...
+src\main.c(348): warning:  #940-D: missing return statement at end of non-void function "TIMx_START_IT" 
+  }
+src\main.c: 1 warning, 0 errors
+compiling stm32l4xx_hal_msp.c...
+compiling stm32l4xx_it.c...
 linking...
-Program Size: Code=11520 RO-data=580 RW-data=60 ZI-data=1292  
+Program Size: Code=12084 RO-data=580 RW-data=64 ZI-data=1352  
 FromELF: creating hex file...
-".\Objects\lab2.axf" - 0 Error(s), 0 Warning(s).
+".\Objects\lab2.axf" - 0 Error(s), 1 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -81,7 +86,7 @@ Package Vendor: Keil
 
    * Component: Keil.STM32L476G-EVAL::Board Support:Buttons:1.0.0
       Source file:   Boards\ST\STM32L476G-EVAL\Common\Buttons_STM32L476G-EVAL.c
-Build Time Elapsed:  00:00:12
+Build Time Elapsed:  00:00:23
 </pre>
 </body>
 </html>

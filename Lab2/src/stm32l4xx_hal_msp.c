@@ -53,6 +53,8 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+extern TIM_HandleTypeDef Tim3_Handle, Tim4_Handle;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -118,18 +120,42 @@ void HAL_PPP_MspDeInit(void)
   */
 void HAL_TIM_Base_MspInit (TIM_HandleTypeDef *htim)
 {
-  /*##-1- Enable peripherals and GPIO Clocks #################################*/
-  /* TIMx Peripheral clock enable */
- 
-//
+	if(htim == &Tim3_Handle)
+	{
+		/*##-1- Enable peripherals and GPIO Clocks #################################*/
+		/* TIMx Peripheral clock enable */
+		//
+		__HAL_RCC_TIM3_CLK_ENABLE();
 	
 	
-  /*##-2- Configure the NVIC for TIMx ########################################*/
-  /* Set the TIMx priority */
-	//
-  
-  /* Enable the TIMx global Interrupt */
-//
+		/*##-2- Configure the NVIC for TIMx ########################################*/
+		/* Set the TIMx priority */
+		//
+		HAL_NVIC_SetPriority(TIM3_IRQn, 1, 0);
+	
+	
+		/* Enable the TIMx global Interrupt */
+		//
+		HAL_NVIC_EnableIRQ(TIM3_IRQn);
+	}
+	else if(htim == &Tim4_Handle)
+	{
+		/*##-1- Enable peripherals and GPIO Clocks #################################*/
+		/* TIMx Peripheral clock enable */
+		//
+		__HAL_RCC_TIM4_CLK_ENABLE();
+	
+	
+		/*##-2- Configure the NVIC for TIMx ########################################*/
+		/* Set the TIMx priority */
+		//
+		HAL_NVIC_SetPriority(TIM4_IRQn, 1, 0);
+	
+	
+		/* Enable the TIMx global Interrupt */
+		//
+		HAL_NVIC_EnableIRQ(TIM4_IRQn);
+	}
 }
 
 //configure the 
@@ -137,16 +163,17 @@ void HAL_TIM_OC_MspInit (TIM_HandleTypeDef *htim)
 {
   /*##-1- Enable peripherals and GPIO Clocks #################################*/
   /* TIMx Peripheral clock enable */
- 
 //
-	
+	__HAL_RCC_TIM5_CLK_ENABLE();
 	
   /*##-2- Configure the NVIC for TIMx ########################################*/
   /* Set the TIMx priority */
 //
+	HAL_NVIC_SetPriority(TIM5_IRQn, 1, 0);
   
   /* Enable the TIMx global Interrupt */
 //
+	HAL_NVIC_EnableIRQ(TIM5_IRQn);
 }
 
  void HAL_RNG_MspInit(RNG_HandleTypeDef *hrng)
@@ -159,7 +186,6 @@ void HAL_TIM_OC_MspInit (TIM_HandleTypeDef *htim)
   HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
 	 
 	 __HAL_RCC_RNG_CLK_ENABLE();
-	  
  }
 
 /**
