@@ -47,25 +47,28 @@
   */
 
 /* Private typedef -----------------------------------------------------------*/
+typedef enum{LED_TOGGLE_STATE, LED_OFF_STATE, LED_ON_STATE} FSM_State;
+
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-
 char lcd_buffer[6];    // LCD display buffer
 TIM_HandleTypeDef Tim3_Handle, Tim4_Handle, Tim5_Handle;
 TIM_OC_InitTypeDef Tim5_OCInitStructure;
 uint16_t Tim3_PrescalerValue, Tim4_PrescalerValue;
 uint32_t Tim5_PrescalerValue;
 uint32_t Tim5_CCR;
-uint8_t ButtonPressed = 0;
+FSM_State state = LED_TOGGLE_STATE;
+uint16_t msElapsed=0;
+char msElapsedString[6] = "000000";
 
 
 __IO HAL_StatusTypeDef Hal_status;  //HAL_ERROR, HAL_TIMEOUT, HAL_OK, or HAL_BUSY 
 uint16_t EE_status=0;
 uint16_t VirtAddVarTab[NB_OF_VAR] = {0x5555, 0x6666, 0x7777}; // the emulated EEPROM can save 3 variables, at these three addresses.
-uint16_t VarDataTab[NB_OF_VAR] = {0, 0, 0};
 uint16_t BestTime;
 uint16_t EEREAD;  //to practice reading the BESTRESULT save in the EE, for EE read/write, require uint16_t type
+char BestTimeString[6];
 
 
 
@@ -84,8 +87,6 @@ void TIM3_Config(void);
 void TIM4_Config(void);
 void TIM5_Config(void);
 void TIM5_OC_Config(void);
-HAL_StatusTypeDef TIMx_START_IT(TIM_HandleTypeDef* htim);
-
 
 
 /* Private functions ---------------------------------------------------------*/
@@ -122,12 +123,13 @@ int main(void)
 	
 	TIM3_Config();
 	
+	TIM4_Config();
+	
 	TIM5_Config();
 	
-	BSP_JOY_Init(JOY_MODE_EXTI);
+	BSP_JOY_Init(JOY_MODE_EXTI); // In stm32l476g_discovery.c, BSP_JOY_INIT function, set prioirty to 1 for this app
 
-	//BSP_LCD_GLASS_ScrollSentence((uint8_t*) "  mt3ta4 lab2 starter", 1, 200);
-	BSP_LCD_GLASS_DisplayString((uint8_t*)"MT3TA4");
+	//BSP_LCD_GLASS_DisplayString((uint8_t*) "rxn ");
 
 //******************* use emulated EEPROM ====================================
 	//First, Unlock the Flash Program Erase controller 
@@ -141,20 +143,16 @@ int main(void)
   }
 // then can write to or read from the emulated EEPROM
 // EE read/write test 
+	
+	EE_WriteVariable(VirtAddVarTab[0], (uint16_t)0xFFFF);				//To ensure it is not intialized to 0, so first rxn is fastest
 	/*	
-	EE_status = EE_WriteVariable(VirtAddVarTab[0], (uint16_t) 0x05);
-	EE_status |= EE_ReadVariable(VirtAddVarTab[0], &VarValue);
+	EE_status = EE_WriteVariable(VirtAddVarTab[0], (uint16_t) 0x03);
+	EE_status |= EE_ReadVariable(VirtAddVarTab[0], &EEREAD);
+	sprintf(BestTimeString, "%u", EEREAD);
+	BSP_LCD_GLASS_DisplayString((uint8_t*)BestTimeString);
 	
-	if(EE_status != HAL_OK)
-	{
-		BSP_LCD_GLASS_ScrollSentence((uint8_t*)"EE not read ",2,700);
-	}
-	else
-	{
-		BSP_LCD_GLASS_ScrollSentence((uint8_t*)"EE val read ",2,700);
-	}
+	EE_WriteVariable(VirtAddVarTab[0], 0x00);
 	*/
-	
 //*********************use RNG ================================  
 	Rng_Handle.Instance=RNG;  //Everytime declare a Handle, need to assign its Instance a base address. like the timer handles.... 													
 	
@@ -277,7 +275,7 @@ void TIM3_Config(void)
 		Error_Handler();
 	}
 	
-	if (TIMx_START_IT(&Tim3_Handle) != HAL_OK) {
+	if (HAL_TIM_Base_Start_IT(&Tim3_Handle) != HAL_OK) {
 		Error_Handler();
 	}
 	
@@ -292,13 +290,10 @@ void TIM4_Config(void)
 	
 	Tim4_Handle.Init.Prescaler = Tim4_PrescalerValue;
 	Tim4_Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
-	Tim4_Handle.Init.Period = 10000 - 1;							// 1 second period b/c 10KHz CLK. 10000/10000 = 1 s
+	Tim4_Handle.Init.Period = 10 - 1;							// 1 second period b/c 10KHz CLK. 10/10000 = 1 ms
 	Tim4_Handle.Init.ClockDivision = 0;
-	if (HAL_TIM_Base_Init(&Tim4_Handle) != HAL_OK) {
-		Error_Handler();
-	}
-	
-	if (TIMx_START_IT(&Tim4_Handle) != HAL_OK) {
+	if (HAL_TIM_Base_Init(&Tim4_Handle) != HAL_OK) 
+	{
 		Error_Handler();
 	}
 }
@@ -327,26 +322,10 @@ void TIM5_OC_Config(void)
 	
 	HAL_TIM_OC_ConfigChannel(&Tim5_Handle,&Tim5_OCInitStructure,TIM_CHANNEL_1);
 	
-	TIMx_START_IT(&Tim5_Handle);
+	//HAL_TIM_OC_Start_IT(&Tim5_Handle, TIM_CHANNEL_1);
 	
 }
 
-HAL_StatusTypeDef TIMx_START_IT(TIM_HandleTypeDef* htim)
-{
-	if((*htim).Instance == TIM3)
-	{
-		return HAL_TIM_Base_Start_IT(&Tim3_Handle);
-	}
-	else if((*htim).Instance == TIM4)
-	{
-		return HAL_TIM_Base_Start_IT(&Tim4_Handle);
-	}
-	else if((*htim).Instance == TIM5)
-	{
-		return HAL_TIM_OC_Start_IT(&Tim5_Handle, TIM_CHANNEL_1);
-	}
-}
-	
 /**
   * @brief EXTI line detection callbacks
   * @param GPIO_Pin: Specifies the pins connected EXTI line
@@ -354,54 +333,77 @@ HAL_StatusTypeDef TIMx_START_IT(TIM_HandleTypeDef* htim)
   */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	BSP_LED_Off(LED4);
-	BSP_LED_Off(LED5);
-	ButtonPressed = (ButtonPressed+1)%2;
-	/*
-  switch (GPIO_Pin) {
-			case GPIO_PIN_0: 		               //SELECT button					
-						BSP_LED_Off(LED4);
-						BSP_LED_Off(LED5);
-						ButtonPressed = (ButtonPressed+1)%2;
-						break;	
-			case GPIO_PIN_1:     //left button						
-						ButtonPressed = (ButtonPressed+1)%2;
-							break;
-			case GPIO_PIN_2:    //right button						  to play again.
-						ButtonPressed = (ButtonPressed+1)%2;
-							break;
-			case GPIO_PIN_3:    //up button							
-						ButtonPressed = (ButtonPressed+1)%2;
-							break;
+	switch(state){
+		case LED_TOGGLE_STATE:
+			HAL_RNG_GenerateRandomNumber(&Rng_Handle, &WaitTime);
+			WaitTime = (WaitTime%40000) + 1;												// To yield number between 1 and 40000 from RNG
+			Tim5_CCR = WaitTime;				// freqeuncy = 10 KHz
+			TIM5_OC_Config();
+		
+			HAL_TIM_Base_Stop_IT(&Tim3_Handle);
+			HAL_TIM_OC_Start_IT(&Tim5_Handle, TIM_CHANNEL_1);
+			BSP_LED_Off(LED4);
+			BSP_LED_Off(LED5);
+			BSP_LCD_GLASS_Clear();
+			state = LED_OFF_STATE;
+			break;
+		case LED_OFF_STATE:
+			HAL_TIM_Base_Start_IT(&Tim3_Handle);
+			state = LED_TOGGLE_STATE;
+			break;
+		case LED_ON_STATE:
+			HAL_TIM_Base_Stop_IT(&Tim4_Handle);
+			HAL_TIM_Base_Start_IT(&Tim3_Handle);
+		
+			EE_ReadVariable(VirtAddVarTab[0], &BestTime);
+			if(msElapsed < BestTime || BestTime == 0x00)
+			{
+				BestTime = msElapsed;
+			}
+			EE_WriteVariable(VirtAddVarTab[0], BestTime);
+			msElapsed = 0;	
+			sprintf(BestTimeString, "%u", BestTime);
 			
-			case GPIO_PIN_5:    //down button						
-						ButtonPressed = (ButtonPressed+1)%2;
-							break;
-			default://
-						//default
-						break;
-	  } 
-		*/
+			state = LED_TOGGLE_STATE;
+			break;
+	}
 }
-
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   //see  stm32lxx_hal_tim.c for different callback function names. 
 																															//for timer 3 , Timer 3 use update event initerrupt
 {
-	if(ButtonPressed == 0)
+	if((*htim).Instance == TIM3)
 	{
-		BSP_LED_Toggle(LED4);
-		BSP_LED_Toggle(LED5);
+		if(state == LED_TOGGLE_STATE)
+		{
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString((uint8_t*)BestTimeString);
+			BSP_LED_Toggle(LED4);
+			BSP_LED_Toggle(LED5);
+		}
+	}
+	else if((*htim).Instance == TIM4)
+	{
+		msElapsed++;
+		sprintf(msElapsedString, "%u", msElapsed);
+		BSP_LCD_GLASS_DisplayString((uint8_t*)msElapsedString);
 	}
 }
 
 
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32fxx_hal_tim.c for different callback function names. 
 {								//for timer 5
-
-
+	if(state == LED_OFF_STATE)
+	{
+		HAL_TIM_Base_Start_IT(&Tim4_Handle);
+		BSP_LED_On(LED4);
+		BSP_LED_On(LED5);
+		state = LED_ON_STATE;
+	}
 		//clear the timer counter at the end of call back to avoid interrupt interval variation!  in stm32l4xx_hal_tim.c, the counter is not cleared after  OC interrupt
-	//__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this macro is defined in stm32l4xx_hal_tim.h
+	__HAL_TIM_SET_COUNTER(htim, 0x0000);   //this macro is defined in stm32l4xx_hal_tim.h
+	
+	HAL_TIM_OC_Stop_IT(&Tim5_Handle, TIM_CHANNEL_1);
 
 }
 	

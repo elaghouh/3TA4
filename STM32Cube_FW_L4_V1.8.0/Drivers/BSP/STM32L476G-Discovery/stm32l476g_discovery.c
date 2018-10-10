@@ -497,7 +497,7 @@ uint8_t BSP_JOY_Init(JOYMode_TypeDef Joy_Mode)
       HAL_GPIO_Init(JOY_PORT[joykey], &GPIO_InitStruct);
       
       /* Enable and set Joy EXTI Interrupt to the lowest priority */
-      HAL_NVIC_SetPriority((IRQn_Type)(JOY_IRQn[joykey]), 0x0F, 0x00);
+      HAL_NVIC_SetPriority((IRQn_Type)(JOY_IRQn[joykey]), 1, 0x00);
       HAL_NVIC_EnableIRQ((IRQn_Type)(JOY_IRQn[joykey]));
     }
   }

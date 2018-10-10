@@ -1,5 +1,6 @@
 .\objects\stm32l4xx_it.o: src\stm32l4xx_it.c
 .\objects\stm32l4xx_it.o: .\inc\main.h
+.\objects\stm32l4xx_it.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 .\objects\stm32l4xx_it.o: ..\STM32Cube_FW_L4_V1.8.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal.h
 .\objects\stm32l4xx_it.o: .\inc\stm32l4xx_hal_conf.h
 .\objects\stm32l4xx_it.o: ..\STM32Cube_FW_L4_V1.8.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_rcc.h
@@ -15,7 +16,6 @@
 .\objects\stm32l4xx_it.o: ..\STM32Cube_FW_L4_V1.8.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include\system_stm32l4xx.h
 .\objects\stm32l4xx_it.o: ..\STM32Cube_FW_L4_V1.8.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal.h
 .\objects\stm32l4xx_it.o: ..\STM32Cube_FW_L4_V1.8.0\Drivers\STM32L4xx_HAL_Driver\Inc\Legacy/stm32_hal_legacy.h
-.\objects\stm32l4xx_it.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 .\objects\stm32l4xx_it.o: ..\STM32Cube_FW_L4_V1.8.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_rcc_ex.h
 .\objects\stm32l4xx_it.o: ..\STM32Cube_FW_L4_V1.8.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_gpio.h
 .\objects\stm32l4xx_it.o: ..\STM32Cube_FW_L4_V1.8.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_gpio_ex.h
