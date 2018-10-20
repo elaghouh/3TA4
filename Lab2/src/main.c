@@ -59,13 +59,13 @@ uint16_t Tim3_PrescalerValue, Tim4_PrescalerValue;
 uint32_t Tim5_PrescalerValue;
 uint32_t Tim5_CCR;
 FSM_State state = LED_TOGGLE_STATE;		//Intial state should be flashing LEDs
-uint16_t msElapsed=0;
+uint32_t msElapsed=0;
 char msElapsedString[6] = "000000";
 
 __IO HAL_StatusTypeDef Hal_status;  //HAL_ERROR, HAL_TIMEOUT, HAL_OK, or HAL_BUSY 
 uint16_t EE_status=0;
 uint16_t VirtAddVarTab[NB_OF_VAR] = {0x5555, 0x6666, 0x7777}; // the emulated EEPROM can save 3 variables, at these three addresses.
-uint16_t BestTime = 0;
+uint16_t BestTime;
 char BestTimeString[6];
 
 RNG_HandleTypeDef Rng_Handle;
@@ -134,8 +134,6 @@ int main(void)
   }
 // then can write to or read from the emulated EEPROM
 // EE read/write test 
-	
-	EE_WriteVariable(VirtAddVarTab[0], (uint16_t)0xFFFF);				//To ensure it is not intialized to 0, so first rxn is fastest
 	/*	
 	EE_status = EE_WriteVariable(VirtAddVarTab[0], (uint16_t) 0x03);
 	EE_status |= EE_ReadVariable(VirtAddVarTab[0], &EEREAD);
@@ -160,6 +158,11 @@ int main(void)
 	Tim5_CCR = WaitTime;				//TIM5 used for the RNG val because CCR is 32 bit, and RNG outputs 32 bit
 	
 	TIM5_OC_Config();
+	
+	EE_ReadVariable(VirtAddVarTab[0], &BestTime);		
+	sprintf(BestTimeString, "%u", BestTime);
+	
+	BSP_LCD_GLASS_DisplayString((uint8_t*)BestTimeString);
 	
   /* Infinite loop */
   while (1)
@@ -280,7 +283,7 @@ void TIM4_Config(void)	//TIM4 used for the LED_ON state to measure reaction time
 	
 	Tim4_Handle.Init.Prescaler = Tim4_PrescalerValue;
 	Tim4_Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
-	Tim4_Handle.Init.Period = 10 - 1;							// 1 second period b/c 10KHz CLK. 10/10000 = 1 ms
+	Tim4_Handle.Init.Period = 10 - 1;							// 1 millisecond period b/c 10KHz CLK. 10/10000 = 1 ms
 	Tim4_Handle.Init.ClockDivision = 0;
 	if (HAL_TIM_Base_Init(&Tim4_Handle) != HAL_OK) 
 	{
@@ -311,7 +314,7 @@ void TIM5_OC_Config(void)
 	
 	HAL_TIM_OC_ConfigChannel(&Tim5_Handle,&Tim5_OCInitStructure,TIM_CHANNEL_1);
 	
-	//Don't start TIM5 here because this is calle din main function, where we are still in FLASHING LED state. This timer is for the LED OFF state
+	//Don't start TIM5 here because this is called in main function, where we are still in FLASHING LED state. This timer is for the LED OFF state
 	
 }
 
@@ -322,42 +325,49 @@ void TIM5_OC_Config(void)
   */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	switch(state){
-		case LED_TOGGLE_STATE:
-			HAL_RNG_GenerateRandomNumber(&Rng_Handle, &WaitTime);
-			WaitTime = (WaitTime%40000) + 1;												// To yield number between 1 and 40000 from RNG
-			Tim5_CCR = WaitTime;				//reset CCR to new random wait time before turning LEDs off
-			TIM5_OC_Config();						// must reconifgure the OC timer with new CCR value
-		
-			HAL_TIM_Base_Stop_IT(&Tim3_Handle);				//Stop TIM3 since it is used only for flashing LED state, adn we don't want it to interrupt
-			HAL_TIM_OC_Start_IT(&Tim5_Handle, TIM_CHANNEL_1);			//Must start TIM5 here since it wasn't started in OC_config function
-			BSP_LED_Off(LED4);
-			BSP_LED_Off(LED5);
-			BSP_LCD_GLASS_Clear();					// Prepare LCD for displaying the live reaction timer
-			state = LED_OFF_STATE;					// FSM now in LED OFF state
+	switch(GPIO_Pin){
+		case GPIO_PIN_1:
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString((uint8_t*)BestTimeString);
 			break;
-		case LED_OFF_STATE:
-			HAL_TIM_OC_Stop_IT(&Tim5_Handle, TIM_CHANNEL_1);			//Cheating condition if button is pressed before LED's come on, stop random wait timer
-			BSP_LCD_GLASS_DisplayString((uint8_t*)"cheat");			
-			HAL_TIM_Base_Start_IT(&Tim3_Handle);			// Return to flashing LEDs
-			state = LED_TOGGLE_STATE;					// Reset state
-			break;
-		case LED_ON_STATE:
-			HAL_TIM_Base_Stop_IT(&Tim4_Handle);			// Stop TIM4 which is used to measure reaction time
-			HAL_TIM_Base_Start_IT(&Tim3_Handle);		// Return to flashing LEDs timer
-		
-			EE_ReadVariable(VirtAddVarTab[0], &BestTime);		
-			if(msElapsed < BestTime || BestTime == 0x00)		// 0x00 condition for the first press where we don't have a best time
-			{
-				BestTime = msElapsed;
+		case GPIO_PIN_0:
+			switch(state){
+				case LED_TOGGLE_STATE:
+					HAL_RNG_GenerateRandomNumber(&Rng_Handle, &WaitTime);
+					WaitTime = (WaitTime%40000) + 1;												// To yield number between 1 and 40000 from RNG
+					Tim5_CCR = WaitTime;				//reset CCR to new random wait time before turning LEDs off
+					TIM5_OC_Config();						// must reconifgure the OC timer with new CCR value
+				
+					HAL_TIM_Base_Stop_IT(&Tim3_Handle);				//Stop TIM3 since it is used only for flashing LED state, adn we don't want it to interrupt
+					HAL_TIM_OC_Start_IT(&Tim5_Handle, TIM_CHANNEL_1);			//Must start TIM5 here since it wasn't started in OC_config function
+					BSP_LED_Off(LED4);
+					BSP_LED_Off(LED5);
+					BSP_LCD_GLASS_Clear();					// Prepare LCD for displaying the live reaction timer
+					state = LED_OFF_STATE;					// FSM now in LED OFF state
+					break;
+				case LED_OFF_STATE:
+					HAL_TIM_OC_Stop_IT(&Tim5_Handle, TIM_CHANNEL_1);			//Cheating condition if button is pressed before LED's come on, stop random wait timer
+					BSP_LCD_GLASS_DisplayString((uint8_t*)"cheat");			
+					HAL_TIM_Base_Start_IT(&Tim3_Handle);			// Return to flashing LEDs
+					state = LED_TOGGLE_STATE;					// Reset state
+					break;
+				case LED_ON_STATE:
+					HAL_TIM_Base_Stop_IT(&Tim4_Handle);			// Stop TIM4 which is used to measure reaction time
+					HAL_TIM_Base_Start_IT(&Tim3_Handle);		// Return to flashing LEDs timer
+				
+					EE_ReadVariable(VirtAddVarTab[0], &BestTime);		
+					if(msElapsed < BestTime || BestTime == 0x00)		// 0x00 condition for the first press where we don't have a best time
+					{
+						BestTime = msElapsed;
+					}
+					EE_WriteVariable(VirtAddVarTab[0], BestTime);
+					msElapsed = 0;	
+					sprintf(BestTimeString, "%u", BestTime);
+					
+					state = LED_TOGGLE_STATE;
+					break;
 			}
-			EE_WriteVariable(VirtAddVarTab[0], BestTime);
-			msElapsed = 0;	
-			sprintf(BestTimeString, "%u", BestTime);
-			
-			state = LED_TOGGLE_STATE;
-			break;
-	}
+		}
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   //see  stm32lxx_hal_tim.c for different callback function names. 
@@ -370,7 +380,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)   //see  stm32lxx_ha
 		BSP_LED_Toggle(LED4);
 		BSP_LED_Toggle(LED5);
 	}
-	else if((*htim).Instance == TIM4 && state == LED_ON_STATE)
+	if((*htim).Instance == TIM4 && state == LED_ON_STATE)
 	{
 		msElapsed++;
 		sprintf(msElapsedString, "%u", msElapsed);
