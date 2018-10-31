@@ -64,7 +64,7 @@ NOTE: students can also configure the TimeStamp pin
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 typedef enum SystemState{TIMESHOW,DATESHOW,PRESSSHOW,TIMEDATESET,PRESSRECORD} SystemState;
-typedef enum timedatesetpos{SECOND_POS=0,MINUTE_POS=1,HOUR_POS=2,DATE_POS=3,DAY_POS=4,MONTH_POS=5,YEAR_POS=6} timedatesetpos;
+typedef enum timedatesetpos{SECOND_POS=0,MINUTE_POS=1,HOUR_POS=2,YEAR_POS=3,MONTH_POS=4,DAY_POS=5,DATE_POS=6} timedatesetpos;
 SystemState state = TIMESHOW;
 
 I2C_HandleTypeDef  pI2c_Handle;
@@ -86,13 +86,14 @@ char timestring[10]={0};  //
 char datestring[12]={0};
 
 
-uint8_t wd=0x00, dd=0x00, mo=0x0A, yy=0x18, ss=0x00, mm=0x00, hh=0x00; // for weekday, day, month, year, second, minute, hour
+uint8_t wd=0x01, dd=0x01, mo=0x0A, yy=0x18, ss=0x00, mm=0x00, hh=0x00; // for weekday, day, month, year, second, minute, hour
 
 __IO uint32_t SEL_Pressed_StartTick;   //sysTick when the User button is pressed
 
 __IO uint8_t leftpressed, rightpressed, uppressed, downpressed, selpressed, push1pressed;  // button pressed 
 __IO uint8_t  sel_held;   // if the selection button is held for a while (>800ms)
 timedatesetpos settingpos = SECOND_POS;
+uint8_t allowchange = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -250,55 +251,28 @@ int main(void)
 						} 
 					}
 			}					
-//==============================================================			
-
-			if (downpressed==1) {
-				if (state == TIMEDATESET)
-					switch (settingpos) {
-						case SECOND_POS:
-							ss = (ss - 1)%60;
-							break;
-						case MINUTE_POS:
-							mm = (mm - 1)%60;
-							break;
-						case HOUR_POS:
-							hh = (hh - 1)%24;
-							break;
-						case DATE_POS:
-							wd = (wd - 1)%7;
-							break;
-						case DAY_POS:
-							dd = (dd - 1)%31+1;
-							break;
-						case MONTH_POS:
-							mo = (mo - 1)%12+1;
-							break;
-						case YEAR_POS:
-							yy = (yy - 1)%100;
-							break;
-					}
-					
-					sprintf(timestring,"%02u%02u%02u",hh,mm,ss); 
-					sprintf(datestring,"%02u%02u%02u",dd,mo,yy);
-					if (settingpos < 3) {
-						BSP_LCD_GLASS_Clear();
-						BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
-					}
-					else if (settingpos >= 3 && settingpos < 7) {
-						BSP_LCD_GLASS_Clear();
-						BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
-					}
-					downpressed=0;
-			}
 //==============================================================					
 			if (selpressed==1)  {
+				if (state == TIMEDATESET) {
+					allowchange = 1;
+					if (settingpos < 3) {
+							BSP_LCD_GLASS_Clear();
+							BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
+						}
+					else if (settingpos >= 3 && settingpos < 7) {
+							BSP_LCD_GLASS_Clear();
+							BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
+						}
+				}
+				else {
 					state = PRESSRECORD;
-					selpressed=0;
+				}
+				
+				selpressed = 0;
 			} 
 //==============================================================			
-
 			if (uppressed==1) {
-				if (state == TIMEDATESET)
+				if (state == TIMEDATESET && allowchange == 1) {
 					switch (settingpos) {
 						case SECOND_POS:
 							ss = (ss + 1)%60;
@@ -310,13 +284,22 @@ int main(void)
 							hh = (hh + 1)%24;
 							break;
 						case DATE_POS:
-							wd = (wd + 1)%7;
+							if (wd == 7)
+								wd = 1;
+							else
+								wd = (wd + 1)%8;
 							break;
 						case DAY_POS:
-							dd = (dd + 1)%31;
+							if (dd == 31)
+								dd = 1;
+							else
+								dd = (dd + 1)%32;
 							break;
 						case MONTH_POS:
-							mo = (mo + 1)%12;
+							if (mo == 12)
+								mo = 1;
+							else
+								mo = (mo + 1)%13;
 							break;
 						case YEAR_POS:
 							yy = (yy + 1)%100;
@@ -325,6 +308,7 @@ int main(void)
 					
 					sprintf(timestring,"%02u%02u%02u",hh,mm,ss); 
 					sprintf(datestring,"%02u%02u%02u",dd,mo,yy);
+					
 					if (settingpos < 3) {
 						BSP_LCD_GLASS_Clear();
 						BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
@@ -333,43 +317,188 @@ int main(void)
 						BSP_LCD_GLASS_Clear();
 						BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
 					}
+				}
 				uppressed=0;
 			}
 			
+//==============================================================			
+			if (downpressed==1) {
+				if (state == TIMEDATESET && allowchange == 1) {
+					switch (settingpos) {
+						case SECOND_POS:
+							if (ss == 1)
+								ss = 59;
+							else
+								ss = (ss - 1)%60;
+							break;
+						case MINUTE_POS:
+							if (mm == 0)
+								mm = 59;
+							else
+								mm = (mm - 1)%60;
+							break;
+						case HOUR_POS:
+							if (hh == 0)
+								hh = 23;
+							else
+								hh = (hh - 1)%24;
+							break;
+						case DATE_POS:
+							if (wd == 1)
+								wd = 7;
+							else
+								wd = (wd - 1)%8;
+							break;
+						case DAY_POS:
+							if (dd == 1)
+								dd = 31;
+							else
+								dd = (dd - 1)%32;
+							break;
+						case MONTH_POS:
+							if (mo == 1)
+								mo = 12;
+							else
+								mo = (mo - 1)%13;
+							break;
+						case YEAR_POS:
+							if (yy == 0)
+								yy = 99;
+							else
+								yy = (yy - 1)%100;
+							break;
+						}
+						
+						sprintf(timestring,"%02u%02u%02u",hh,mm,ss); 
+						sprintf(datestring,"%02u%02u%02u",dd,mo,yy);
+						
+						if (settingpos < 3) {
+							BSP_LCD_GLASS_Clear();
+							BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
+						}
+						else if (settingpos >= 3 && settingpos < 7) {
+							BSP_LCD_GLASS_Clear();
+							BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
+						}
+				}
+	
+					downpressed=0;
+			}
 //==============================================================		 
 			if (leftpressed==1) {
-					if (state == PRESSSHOW)
+					allowchange = 0;
+				
+					if (state == PRESSSHOW) {
+						RTC_AlarmA_IT_Enable(&RTCHandle);
 						state = TIMESHOW;
-					else if (state == TIMEDATESET) {
-						settingpos = (settingpos + 1) %7;
 					}
-					else
+					else if (state == TIMEDATESET) {
+						settingpos = (settingpos + 1) % 7;
+						
+						BSP_LCD_GLASS_Clear();
+						switch(settingpos) {
+							case SECOND_POS:
+								BSP_LCD_GLASS_DisplayString((uint8_t*)"SECS");
+								break;
+							case MINUTE_POS:
+								BSP_LCD_GLASS_DisplayString((uint8_t*)"MINS");
+								break;
+							case HOUR_POS:
+								BSP_LCD_GLASS_DisplayString((uint8_t*)"HRS");
+								break;
+							case DATE_POS:
+								BSP_LCD_GLASS_DisplayString((uint8_t*)"WDAY");
+								break;
+							case DAY_POS:
+								BSP_LCD_GLASS_DisplayString((uint8_t*)"DATE");
+								break;
+							case MONTH_POS:
+								BSP_LCD_GLASS_DisplayString((uint8_t*)"MONTH");
+								break;
+							case YEAR_POS:
+								BSP_LCD_GLASS_DisplayString((uint8_t*)"YEAR");
+								break;
+						}
+					
+						/*sprintf(timestring,"%02u%02u%02u",hh,mm,ss); 
+						sprintf(datestring,"%02u%02u%02u",dd,mo,yy);
+						if (settingpos < 3) {
+							BSP_LCD_GLASS_Clear();
+							BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
+						}
+						else if (settingpos >= 3 && settingpos < 7) {
+							BSP_LCD_GLASS_Clear();
+							BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
+						}*/
+					}
+					else {
 						state = PRESSSHOW;
-							
+					}
 					leftpressed=0;
 			}			
 //==============================================================			
-
 			if (rightpressed==1) {
-				if (state == DATESHOW)
-					state = TIMESHOW;
-				else if (state == TIMEDATESET)
-					settingpos = (settingpos - 1) % 7;
-				else
-					state = DATESHOW;
+				allowchange = 0;
 				
+				if (state == TIMEDATESET) {
+					if (settingpos == 0)
+						settingpos = 6;
+					else {
+						settingpos = (settingpos - 1) % 7;
+					}
+					
+					//sprintf(timestring,"%02u%02u%02u",hh,mm,ss); 
+					//sprintf(datestring,"%02u%02u%02u",dd,mo,yy);
+					
+					BSP_LCD_GLASS_Clear();
+					switch(settingpos) {
+						case SECOND_POS:
+							BSP_LCD_GLASS_DisplayString((uint8_t*)"SECS");
+							break;
+						case MINUTE_POS:
+							BSP_LCD_GLASS_DisplayString((uint8_t*)"MINS");
+							break;
+						case HOUR_POS:
+							BSP_LCD_GLASS_DisplayString((uint8_t*)"HRS");
+							break;
+						case DATE_POS:
+							BSP_LCD_GLASS_DisplayString((uint8_t*)"WDAY");
+							break;
+						case DAY_POS:
+							BSP_LCD_GLASS_DisplayString((uint8_t*)"DATE");
+							break;
+						case MONTH_POS:
+							BSP_LCD_GLASS_DisplayString((uint8_t*)"MONTH");
+							break;
+						case YEAR_POS:
+							BSP_LCD_GLASS_DisplayString((uint8_t*)"YEAR");
+							break;
+					}
+					/*
+					if (settingpos < 3) {
+						BSP_LCD_GLASS_Clear();
+						BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
+					}
+					else if (settingpos >= 3 && settingpos < 7) {
+						BSP_LCD_GLASS_Clear();
+						BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
+					}*/
+				}
 				rightpressed=0;
 			}
 //==============================================================							
 			if (push1pressed==1) {
 					if (state == TIMEDATESET) {
+						settingpos = SECOND_POS;
 						state=TIMESHOW;
 						RTC_Config();
 						RTC_AlarmA_IT_Enable(&RTCHandle);
 					}
-					else
+					else {
+						BSP_LCD_GLASS_Clear();
+						BSP_LCD_GLASS_DisplayString((uint8_t*)"SECS");
 						state=TIMEDATESET;
-			
+					}
 					push1pressed=0;
 			}
 //==============================================================			
@@ -406,8 +535,6 @@ int main(void)
 
 	}
 }
-
-
 /**
   * @brief  System Clock Configuration
   *         The system Clock is configured as follows :
@@ -490,8 +617,6 @@ void SystemClock_Config(void)
   __HAL_RCC_PWR_CLK_DISABLE();      
 }
 //after RCC configuration, for timmer 2---7, which are one APB1, the TIMxCLK from RCC is 4MHz
-
-
 void Pushbutton1_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;

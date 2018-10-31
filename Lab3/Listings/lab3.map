@@ -78,15 +78,15 @@ Section Cross References
     main.o(i.main) refers to stm32l476g_discovery.o(i.BSP_JOY_GetState) for BSP_JOY_GetState
     main.o(i.main) refers to stm32l4xx_hal.o(i.HAL_GetTick) for HAL_GetTick
     main.o(i.main) refers to main.o(i.RTC_DateShow) for RTC_DateShow
-    main.o(i.main) refers to printf6.o(i.__0sprintf$6) for __2sprintf
     main.o(i.main) refers to stm32l476g_discovery_glass_lcd.o(i.BSP_LCD_GLASS_Clear) for BSP_LCD_GLASS_Clear
+    main.o(i.main) refers to printf6.o(i.__0sprintf$6) for __2sprintf
     main.o(i.main) refers to main.o(i.RTC_AlarmA_IT_Enable) for RTC_AlarmA_IT_Enable
+    main.o(i.main) refers to main.o(.data) for .data
+    main.o(i.main) refers to main.o(.bss) for .bss
     main.o(i.main) refers to main.o(i.EE_RecordTime) for EE_RecordTime
     main.o(i.main) refers to stm32l476g_discovery.o(i.BSP_LED_On) for BSP_LED_On
     main.o(i.main) refers to main.o(i.EE_DisplayTime) for EE_DisplayTime
     main.o(i.main) refers to main.o(i.RTC_AlarmA_IT_Disable) for RTC_AlarmA_IT_Disable
-    main.o(i.main) refers to main.o(.data) for .data
-    main.o(i.main) refers to main.o(.bss) for .bss
     stm32l4xx_it.o(i.EXTI0_IRQHandler) refers to stm32l4xx_hal_gpio.o(i.HAL_GPIO_EXTI_IRQHandler) for HAL_GPIO_EXTI_IRQHandler
     stm32l4xx_it.o(i.EXTI15_10_IRQHandler) refers to stm32l4xx_hal_gpio.o(i.HAL_GPIO_EXTI_IRQHandler) for HAL_GPIO_EXTI_IRQHandler
     stm32l4xx_it.o(i.EXTI1_IRQHandler) refers to stm32l4xx_hal_gpio.o(i.HAL_GPIO_EXTI_IRQHandler) for HAL_GPIO_EXTI_IRQHandler
@@ -1829,9 +1829,9 @@ Image Symbol Table
     i._sputc                                 0x08003928   Section        0  printf6.o(i._sputc)
     _sputc                                   0x08003929   Thumb Code    10  printf6.o(i._sputc)
     i.main                                   0x08003934   Section        0  main.o(i.main)
-    .constdata                               0x08003c80   Section       72  stm32l476g_discovery_glass_lcd.o(.constdata)
-    .constdata                               0x08003cc8   Section       20  stm32l476g_discovery.o(.constdata)
-    .constdata                               0x08003cdc   Section       64  system_stm32l4xx.o(.constdata)
+    .constdata                               0x08003db4   Section       72  stm32l476g_discovery_glass_lcd.o(.constdata)
+    .constdata                               0x08003dfc   Section       20  stm32l476g_discovery.o(.constdata)
+    .constdata                               0x08003e10   Section       64  system_stm32l4xx.o(.constdata)
     .data                                    0x20000000   Section       28  main.o(.data)
     .data                                    0x2000001c   Section        1  i2c_at24c64.o(.data)
     .data                                    0x2000001d   Section        2  stm32l476g_discovery_glass_lcd.o(.data)
@@ -2093,16 +2093,16 @@ Image Symbol Table
     __scatterload_copy                       0x080035c1   Thumb Code    14  handlers.o(i.__scatterload_copy)
     __scatterload_null                       0x080035cf   Thumb Code     2  handlers.o(i.__scatterload_null)
     __scatterload_zeroinit                   0x080035d1   Thumb Code    14  handlers.o(i.__scatterload_zeroinit)
-    main                                     0x08003935   Thumb Code   810  main.o(i.main)
-    CapLetterMap                             0x08003c80   Data          52  stm32l476g_discovery_glass_lcd.o(.constdata)
-    NumberMap                                0x08003cb4   Data          20  stm32l476g_discovery_glass_lcd.o(.constdata)
-    LED_PIN                                  0x08003cc8   Data           4  stm32l476g_discovery.o(.constdata)
-    JOY_IRQn                                 0x08003ccc   Data           5  stm32l476g_discovery.o(.constdata)
-    JOY_PIN                                  0x08003cd2   Data          10  stm32l476g_discovery.o(.constdata)
-    AHBPrescTable                            0x08003cdc   Data          16  system_stm32l4xx.o(.constdata)
-    MSIRangeTable                            0x08003cec   Data          48  system_stm32l4xx.o(.constdata)
-    Region$$Table$$Base                      0x08003d1c   Number         0  anon$$obj.o(Region$$Table)
-    Region$$Table$$Limit                     0x08003d3c   Number         0  anon$$obj.o(Region$$Table)
+    main                                     0x08003935   Thumb Code  1148  main.o(i.main)
+    CapLetterMap                             0x08003db4   Data          52  stm32l476g_discovery_glass_lcd.o(.constdata)
+    NumberMap                                0x08003de8   Data          20  stm32l476g_discovery_glass_lcd.o(.constdata)
+    LED_PIN                                  0x08003dfc   Data           4  stm32l476g_discovery.o(.constdata)
+    JOY_IRQn                                 0x08003e00   Data           5  stm32l476g_discovery.o(.constdata)
+    JOY_PIN                                  0x08003e06   Data          10  stm32l476g_discovery.o(.constdata)
+    AHBPrescTable                            0x08003e10   Data          16  system_stm32l4xx.o(.constdata)
+    MSIRangeTable                            0x08003e20   Data          48  system_stm32l4xx.o(.constdata)
+    Region$$Table$$Base                      0x08003e50   Number         0  anon$$obj.o(Region$$Table)
+    Region$$Table$$Limit                     0x08003e70   Number         0  anon$$obj.o(Region$$Table)
     state                                    0x20000000   Data           1  main.o(.data)
     wd                                       0x20000001   Data           1  main.o(.data)
     dd                                       0x20000002   Data           1  main.o(.data)
@@ -2112,14 +2112,15 @@ Image Symbol Table
     mm                                       0x20000006   Data           1  main.o(.data)
     hh                                       0x20000007   Data           1  main.o(.data)
     settingpos                               0x20000008   Data           1  main.o(.data)
-    EE_status                                0x20000009   Data           1  main.o(.data)
-    leftpressed                              0x2000000a   Data           1  main.o(.data)
-    rightpressed                             0x2000000b   Data           1  main.o(.data)
-    uppressed                                0x2000000c   Data           1  main.o(.data)
-    downpressed                              0x2000000d   Data           1  main.o(.data)
-    selpressed                               0x2000000e   Data           1  main.o(.data)
-    push1pressed                             0x2000000f   Data           1  main.o(.data)
-    sel_held                                 0x20000010   Data           1  main.o(.data)
+    allowchange                              0x20000009   Data           1  main.o(.data)
+    EE_status                                0x2000000a   Data           1  main.o(.data)
+    leftpressed                              0x2000000b   Data           1  main.o(.data)
+    rightpressed                             0x2000000c   Data           1  main.o(.data)
+    uppressed                                0x2000000d   Data           1  main.o(.data)
+    downpressed                              0x2000000e   Data           1  main.o(.data)
+    selpressed                               0x2000000f   Data           1  main.o(.data)
+    push1pressed                             0x20000010   Data           1  main.o(.data)
+    sel_held                                 0x20000011   Data           1  main.o(.data)
     memLocation                              0x20000012   Data           2  main.o(.data)
     RTC_DateStructure                        0x20000014   Data           4  main.o(.data)
     SEL_Pressed_StartTick                    0x20000018   Data           4  main.o(.data)
@@ -2149,9 +2150,9 @@ Memory Map of the image
 
   Image Entry point : 0x0800019d
 
-  Load Region LR_1 (Base: 0x08000000, Size: 0x00003d88, Max: 0xffffffff, ABSOLUTE)
+  Load Region LR_1 (Base: 0x08000000, Size: 0x00003ebc, Max: 0xffffffff, ABSOLUTE)
 
-    Execution Region ER_RO (Base: 0x08000000, Size: 0x00003d3c, Max: 0xffffffff, ABSOLUTE)
+    Execution Region ER_RO (Base: 0x08000000, Size: 0x00003e70, Max: 0xffffffff, ABSOLUTE)
 
     Base Addr    Size         Type   Attr      Idx    E Section Name        Object
 
@@ -2314,11 +2315,11 @@ Memory Map of the image
     0x080038fa   0x0000002e   Code   RO         4041    i._printf_pre_padding  mc_w.l(printf6.o)
     0x08003928   0x0000000a   Code   RO         4043    i._sputc            mc_w.l(printf6.o)
     0x08003932   0x00000002   PAD
-    0x08003934   0x0000034c   Code   RO           16    i.main              main.o
-    0x08003c80   0x00000048   Data   RO          493    .constdata          stm32l476g_discovery_glass_lcd.o
-    0x08003cc8   0x00000014   Data   RO          624    .constdata          stm32l476g_discovery.o
-    0x08003cdc   0x00000040   Data   RO         3839    .constdata          system_stm32l4xx.o
-    0x08003d1c   0x00000020   Data   RO         4182    Region$$Table       anon$$obj.o
+    0x08003934   0x00000480   Code   RO           16    i.main              main.o
+    0x08003db4   0x00000048   Data   RO          493    .constdata          stm32l476g_discovery_glass_lcd.o
+    0x08003dfc   0x00000014   Data   RO          624    .constdata          stm32l476g_discovery.o
+    0x08003e10   0x00000040   Data   RO         3839    .constdata          system_stm32l4xx.o
+    0x08003e50   0x00000020   Data   RO         4182    Region$$Table       anon$$obj.o
 
 
     Execution Region ER_RW (Base: 0x20000000, Size: 0x0000004c, Max: 0xffffffff, ABSOLUTE)
@@ -2352,7 +2353,7 @@ Image component sizes
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   Object Name
 
        384         24          0          1          0       3903   i2c_at24c64.o
-      2508        254          0         28        156     849257   main.o
+      2816        326          0         28        156     849621   main.o
         36          8        392          0       1024        868   startup_stm32l476xx.o
        394         58         20         36          0       6388   stm32l476g_discovery.o
       2006        106         72          2         76       7847   stm32l476g_discovery_glass_lcd.o
@@ -2372,7 +2373,7 @@ Image component sizes
         68         12         64          4          0       1361   system_stm32l4xx.o
 
     ----------------------------------------------------------------------
-     14036        756        580         76       1260     968987   Object Totals
+     14344        828        580         76       1260     969351   Object Totals
          0          0         32          0          0          0   (incl. Generated)
         40          0          0          1          4          0   (incl. Padding)
 
@@ -2414,15 +2415,15 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-     15096        782        580         76       1260     958707   Grand Totals
-     15096        782        580         76       1260     958707   ELF Image Totals
-     15096        782        580         76          0          0   ROM Totals
+     15404        854        580         76       1260     959071   Grand Totals
+     15404        854        580         76       1260     959071   ELF Image Totals
+     15404        854        580         76          0          0   ROM Totals
 
 ==============================================================================
 
-    Total RO  Size (Code + RO Data)                15676 (  15.31kB)
+    Total RO  Size (Code + RO Data)                15984 (  15.61kB)
     Total RW  Size (RW Data + ZI Data)              1336 (   1.30kB)
-    Total ROM Size (Code + RO Data + RW Data)      15752 (  15.38kB)
+    Total ROM Size (Code + RO Data + RW Data)      16060 (  15.68kB)
 
 ==============================================================================
 
