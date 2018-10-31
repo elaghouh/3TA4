@@ -28,15 +28,19 @@ Project File Date:  10/15/2018
 *** Using Compiler 'V5.06 update 4 (build 422)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'stm32L476DISCO'
 compiling main.c...
-src\main.c(536): warning:  #940-D: missing return statement at end of non-void function "RTC_AlarmA_IT_Disable" 
+src\main.c(344): warning:  #188-D: enumerated type mixed with another type
+                                                settingpos = (settingpos + 1) %7;
+src\main.c(357): warning:  #188-D: enumerated type mixed with another type
+                                        settingpos = (settingpos - 1) % 7;
+src\main.c(686): warning:  #940-D: missing return statement at end of non-void function "RTC_AlarmA_IT_Disable" 
   }
-src\main.c(562): warning:  #940-D: missing return statement at end of non-void function "RTC_AlarmA_IT_Enable" 
+src\main.c(712): warning:  #940-D: missing return statement at end of non-void function "RTC_AlarmA_IT_Enable" 
   }
-src\main.c: 2 warnings, 0 errors
+src\main.c: 4 warnings, 0 errors
 linking...
-Program Size: Code=14376 RO-data=580 RW-data=72 ZI-data=1256  
+Program Size: Code=15096 RO-data=580 RW-data=76 ZI-data=1260  
 FromELF: creating hex file...
-".\Objects\lab3.axf" - 0 Error(s), 2 Warning(s).
+".\Objects\lab3.axf" - 0 Error(s), 4 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -48,18 +52,18 @@ Package Vendor: ARM
 
 Package Vendor: Keil
                 http://www.keil.com/pack/Keil.MDK-Middleware.7.7.0.pack
-                ::Board Support:LED:1.0.0 (API)
+                ::Board Support:Buttons:1.0.0 (API)
                 Middleware for Keil MDK-Professional and MDK-Plus
-   * Component: LED Version: 1.0.0
    * Component: Buttons Version: 1.0.0
+   * Component: LED Version: 1.0.0
 
 Package Vendor: Keil
                 http://www.keil.com/pack/Keil.STM32L4xx_DFP.1.4.0.pack
-                Keil::Device:Startup:1.2.0
+                Keil.STM32L476G-EVAL::Board Support:LED:1.0.0
                 STMicroelectronics STM32L4 Series Device Support, Drivers and Examples
-   * Component: Startup Version: 1.2.0
    * Component: LED Version: 1.0.0
    * Component: Buttons Version: 1.0.0
+   * Component: Startup Version: 1.2.0
 
 <h2>Collection of Component include folders:</h2>
   .\RTE\_stm32L476DISCO
@@ -71,22 +75,22 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE:5.1.2
 
-   * Component: ::Board Support:LED:1.0.0 (API)
-      Include file:  Board\Board_LED.h
-
    * Component: ::Board Support:Buttons:1.0.0 (API)
       Include file:  Board\Board_Buttons.h
 
-   * Component: Keil::Device:Startup:1.2.0
-      Source file:   Device\Source\ARM\startup_stm32l476xx.s
-      Source file:   Device\Source\system_stm32l4xx.c
+   * Component: ::Board Support:LED:1.0.0 (API)
+      Include file:  Board\Board_LED.h
 
    * Component: Keil.STM32L476G-EVAL::Board Support:LED:1.0.0
       Source file:   Boards\ST\STM32L476G-EVAL\Common\LED_STM32L476G-EVAL.c
 
    * Component: Keil.STM32L476G-EVAL::Board Support:Buttons:1.0.0
       Source file:   Boards\ST\STM32L476G-EVAL\Common\Buttons_STM32L476G-EVAL.c
-Build Time Elapsed:  00:00:09
+
+   * Component: Keil::Device:Startup:1.2.0
+      Source file:   Device\Source\ARM\startup_stm32l476xx.s
+      Source file:   Device\Source\system_stm32l4xx.c
+Build Time Elapsed:  00:00:12
 </pre>
 </body>
 </html>

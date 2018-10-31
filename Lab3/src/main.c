@@ -63,7 +63,9 @@ NOTE: students can also configure the TimeStamp pin
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-enum SystemState{TIMESHOW,DATESHOW,TIMEDATESET};
+typedef enum SystemState{TIMESHOW,DATESHOW,PRESSSHOW,TIMEDATESET,PRESSRECORD} SystemState;
+typedef enum timedatesetpos{SECOND_POS=0,MINUTE_POS=1,HOUR_POS=2,DATE_POS=3,DAY_POS=4,MONTH_POS=5,YEAR_POS=6} timedatesetpos;
+SystemState state = TIMESHOW;
 
 I2C_HandleTypeDef  pI2c_Handle;
 HAL_StatusTypeDef EE_status;
@@ -84,17 +86,19 @@ char timestring[10]={0};  //
 char datestring[12]={0};
 
 
-uint8_t wd, dd, mo, yy, ss, mm, hh; // for weekday, day, month, year, second, minute, hour
+uint8_t wd=0x00, dd=0x00, mo=0x0A, yy=0x18, ss=0x00, mm=0x00, hh=0x00; // for weekday, day, month, year, second, minute, hour
 
 __IO uint32_t SEL_Pressed_StartTick;   //sysTick when the User button is pressed
 
-__IO uint8_t leftpressed, rightpressed, uppressed, downpressed, selpressed;  // button pressed 
+__IO uint8_t leftpressed, rightpressed, uppressed, downpressed, selpressed, push1pressed;  // button pressed 
 __IO uint8_t  sel_held;   // if the selection button is held for a while (>800ms)
+timedatesetpos settingpos = SECOND_POS;
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 
+void Pushbutton1_Init(void);
 void RTC_Config(void);
 void RTC_AlarmAConfig(void);
 void RTC_DateShow(RTC_HandleTypeDef *hrtc);
@@ -129,6 +133,7 @@ int main(void)
 	downpressed=0;
 	selpressed=0;
 	sel_held=0;
+	push1pressed=0;
 	
 
 	HAL_Init();
@@ -145,6 +150,8 @@ int main(void)
 	BSP_LCD_GLASS_Init();
 	
 	BSP_JOY_Init(JOY_MODE_EXTI);
+
+	Pushbutton1_Init();
 
 	BSP_LCD_GLASS_DisplayString((uint8_t*)"MT3TA4");	
 	HAL_Delay(1000);
@@ -238,43 +245,162 @@ int main(void)
 			if (BSP_JOY_GetState() == JOY_SEL) {
 					SEL_Pressed_StartTick=HAL_GetTick(); 
 					while(BSP_JOY_GetState() == JOY_SEL) {  //while the selection button is pressed)	
-						if ((HAL_GetTick()-SEL_Pressed_StartTick)>800) {
+						if ((HAL_GetTick()-SEL_Pressed_StartTick)>1000) {
 								RTC_DateShow(&RTCHandle);
 						} 
 					}
 			}					
 //==============================================================			
 
+			if (downpressed==1) {
+				if (state == TIMEDATESET)
+					switch (settingpos) {
+						case SECOND_POS:
+							ss = (ss - 1)%60;
+							break;
+						case MINUTE_POS:
+							mm = (mm - 1)%60;
+							break;
+						case HOUR_POS:
+							hh = (hh - 1)%24;
+							break;
+						case DATE_POS:
+							wd = (wd - 1)%7;
+							break;
+						case DAY_POS:
+							dd = (dd - 1)%31+1;
+							break;
+						case MONTH_POS:
+							mo = (mo - 1)%12+1;
+							break;
+						case YEAR_POS:
+							yy = (yy - 1)%100;
+							break;
+					}
+					
+					sprintf(timestring,"%02u%02u%02u",hh,mm,ss); 
+					sprintf(datestring,"%02u%02u%02u",dd,mo,yy);
+					if (settingpos < 3) {
+						BSP_LCD_GLASS_Clear();
+						BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
+					}
+					else if (settingpos >= 3 && settingpos < 7) {
+						BSP_LCD_GLASS_Clear();
+						BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
+					}
+					downpressed=0;
+			}
 //==============================================================					
 			if (selpressed==1)  {
-					if (EE_RecordTime(&RTCHandle) != HAL_OK)
-						Error_Handler();
+					state = PRESSRECORD;
 					selpressed=0;
 			} 
 //==============================================================			
 
+			if (uppressed==1) {
+				if (state == TIMEDATESET)
+					switch (settingpos) {
+						case SECOND_POS:
+							ss = (ss + 1)%60;
+							break;
+						case MINUTE_POS:
+							mm = (mm + 1)%60;
+							break;
+						case HOUR_POS:						
+							hh = (hh + 1)%24;
+							break;
+						case DATE_POS:
+							wd = (wd + 1)%7;
+							break;
+						case DAY_POS:
+							dd = (dd + 1)%31;
+							break;
+						case MONTH_POS:
+							mo = (mo + 1)%12;
+							break;
+						case YEAR_POS:
+							yy = (yy + 1)%100;
+							break;
+					}
+					
+					sprintf(timestring,"%02u%02u%02u",hh,mm,ss); 
+					sprintf(datestring,"%02u%02u%02u",dd,mo,yy);
+					if (settingpos < 3) {
+						BSP_LCD_GLASS_Clear();
+						BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
+					}
+					else if (settingpos >= 3 && settingpos < 7) {
+						BSP_LCD_GLASS_Clear();
+						BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
+					}
+				uppressed=0;
+			}
+			
 //==============================================================		 
 			if (leftpressed==1) {
-					EE_DisplayTime(&RTCHandle);
+					if (state == PRESSSHOW)
+						state = TIMESHOW;
+					else if (state == TIMEDATESET) {
+						settingpos = (settingpos + 1) %7;
+					}
+					else
+						state = PRESSSHOW;
 							
 					leftpressed=0;
 			}			
 //==============================================================			
 
-//==============================================================							
 			if (rightpressed==1) {
-
+				if (state == DATESHOW)
+					state = TIMESHOW;
+				else if (state == TIMEDATESET)
+					settingpos = (settingpos - 1) % 7;
+				else
+					state = DATESHOW;
+				
+				rightpressed=0;
+			}
+//==============================================================							
+			if (push1pressed==1) {
+					if (state == TIMEDATESET) {
+						state=TIMESHOW;
+						RTC_Config();
+						RTC_AlarmA_IT_Enable(&RTCHandle);
+					}
+					else
+						state=TIMEDATESET;
 			
-					rightpressed=0;
+					push1pressed=0;
 			}
 //==============================================================			
 
 //==============================================================						
-			//switch (myState) { 
+			switch (state) { 
 				
+				case TIMESHOW:
+					break;
 				
+				case DATESHOW:
+					RTC_DateShow(&RTCHandle);
+					state = TIMESHOW;
+					break;
 				
-			//} //end of switch					
+				case PRESSRECORD:
+					if (EE_RecordTime(&RTCHandle) != HAL_OK)
+						Error_Handler();
+					state=TIMESHOW;
+					break;
+					
+				case PRESSSHOW:
+					EE_DisplayTime(&RTCHandle);
+					state=TIMESHOW;
+					break;
+				
+				case TIMEDATESET:
+					RTC_AlarmA_IT_Disable(&RTCHandle);
+					break;
+				
+			} //end of switch					
 		
 
 
@@ -366,6 +492,31 @@ void SystemClock_Config(void)
 //after RCC configuration, for timmer 2---7, which are one APB1, the TIMxCLK from RCC is 4MHz
 
 
+void Pushbutton1_Init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct;
+	
+	__HAL_RCC_GPIOE_CLK_ENABLE();
+	
+	GPIO_InitStruct.Pin = GPIO_PIN_14;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+	
+	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+	
+	GPIO_InitStruct.Pin = GPIO_PIN_11;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+	
+	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+	
+	HAL_NVIC_SetPriority((IRQn_Type)EXTI15_10_IRQn, 3, 0x00);
+	HAL_NVIC_EnableIRQ((IRQn_Type)EXTI15_10_IRQn);
+	
+}
+
 void RTC_Config(void) {
 	RTC_TimeTypeDef RTC_TimeStructure;
 	RTC_DateTypeDef RTC_DateStructure;
@@ -401,7 +552,7 @@ void RTC_Config(void) {
 		//************students: need to complete the following lines******************************
 		//**************************************************************************************				
 				RTCHandle.Instance = RTC;
-				RTCHandle.Init.HourFormat = RTC_HOURFORMAT_12;
+				RTCHandle.Init.HourFormat = RTC_HOURFORMAT_24;
 				
 				RTCHandle.Init.AsynchPrediv = 127; 
 				RTCHandle.Init.SynchPrediv = 255; 
@@ -426,10 +577,10 @@ void RTC_Config(void) {
 				
  		//*****************Students: please complete the following lnes*****************************
 		//****************************************************************************************		
-				RTC_DateStructure.Year = 0x12;
-				RTC_DateStructure.Month = RTC_MONTH_OCTOBER;
-				RTC_DateStructure.Date = 0x16;
-				RTC_DateStructure.WeekDay = RTC_WEEKDAY_MONDAY;
+				RTC_DateStructure.Year = yy;
+				RTC_DateStructure.Month = mo;
+				RTC_DateStructure.Date = dd;
+				RTC_DateStructure.WeekDay = wd;
 				
 				if(HAL_RTC_SetDate(&RTCHandle,&RTC_DateStructure,RTC_FORMAT_BIN) != HAL_OK)   //BIN format is better 
 															//before, must set in BCD format and read in BIN format!!
@@ -439,10 +590,9 @@ void RTC_Config(void) {
 				} 
   
   
-				RTC_TimeStructure.Hours = 0x00;  
-				RTC_TimeStructure.Minutes = 0x21; 
-				RTC_TimeStructure.Seconds = 0x17;
-				RTC_TimeStructure.TimeFormat = RTC_HOURFORMAT12_PM;
+				RTC_TimeStructure.Hours = hh;  
+				RTC_TimeStructure.Minutes = mm; 
+				RTC_TimeStructure.Seconds = ss;
 				RTC_TimeStructure.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
 				RTC_TimeStructure.StoreOperation = RTC_STOREOPERATION_RESET;
 				
@@ -579,19 +729,19 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			case GPIO_PIN_2:    //right button						  to play again.
 							rightpressed=1;			
 							break;
-			case GPIO_PIN_3:    //up button							
-							BSP_LCD_GLASS_Clear();
-							BSP_LCD_GLASS_DisplayString((uint8_t*)"up");
-							break;
-			
+			case GPIO_PIN_3:    //up button						
+							uppressed=1;
+							break;		
 			case GPIO_PIN_5:    //down button						
-							BSP_LCD_GLASS_Clear();
-							BSP_LCD_GLASS_DisplayString((uint8_t*)"down");
+							downpressed=1;
 							break;
-			case GPIO_PIN_14:    //down button						
+			case GPIO_PIN_14:    //push button 1
+							push1pressed=1;
+							break;
+			case GPIO_PIN_11:    //push button 2					
 							BSP_LCD_GLASS_Clear();
-							BSP_LCD_GLASS_DisplayString((uint8_t*)"PE14");
-							break;			
+							BSP_LCD_GLASS_DisplayString((uint8_t*)"PE11");
+							break;				
 			default://
 						//default
 						break;
@@ -684,7 +834,7 @@ void EE_DisplayTime(RTC_HandleTypeDef *hrtc)
 		
 		BSP_LCD_GLASS_Clear();
 		BSP_LCD_GLASS_DisplayString((uint8_t*)"time1");
-		HAL_Delay(2000);
+		HAL_Delay(1000);
 		BSP_LCD_GLASS_Clear();
 		BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
 		
@@ -698,10 +848,10 @@ void EE_DisplayTime(RTC_HandleTypeDef *hrtc)
 
 		BSP_LCD_GLASS_Clear();
 		BSP_LCD_GLASS_DisplayString((uint8_t*)"time2");
-		HAL_Delay(2000);
+		HAL_Delay(1000);
 		BSP_LCD_GLASS_Clear();
 		BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
-		HAL_Delay(2000);
+		HAL_Delay(1000);
 		BSP_LCD_GLASS_Clear();
 	}
 	
