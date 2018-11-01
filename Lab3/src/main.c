@@ -79,8 +79,6 @@ __IO HAL_StatusTypeDef Hal_status;  //HAL_ERROR, HAL_TIMEOUT, HAL_OK, of HAL_BUS
 //memory location to write to in the device
 __IO uint16_t memLocation; //pick any location within range
 
-  
-
 char lcd_buffer[6];    // LCD display buffer
 char timestring[10]={0};  //   
 char datestring[12]={0};
@@ -90,7 +88,7 @@ uint8_t wd=0x01, dd=0x01, mo=0x0A, yy=0x18, ss=0x00, mm=0x00, hh=0x00; // for we
 
 __IO uint32_t SEL_Pressed_StartTick;   //sysTick when the User button is pressed
 
-__IO uint8_t leftpressed, rightpressed, uppressed, downpressed, selpressed, push1pressed;  // button pressed 
+__IO uint8_t leftpressed, rightpressed, uppressed, downpressed, selpressed, push1pressed,push2pressed;  // button pressed 
 __IO uint8_t  sel_held;   // if the selection button is held for a while (>800ms)
 timedatesetpos settingpos = SECOND_POS;
 uint8_t allowchange = 0;
@@ -135,6 +133,7 @@ int main(void)
 	selpressed=0;
 	sel_held=0;
 	push1pressed=0;
+	push2pressed=0;
 	
 
 	HAL_Init();
@@ -146,7 +145,6 @@ int main(void)
 											
 	
 	HAL_InitTick(0x0000); //set the systick interrupt priority to the highest, !!!This line need to be after systemClock_config()
-
 	
 	BSP_LCD_GLASS_Init();
 	
@@ -263,9 +261,6 @@ int main(void)
 							BSP_LCD_GLASS_Clear();
 							BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
 						}
-				}
-				else {
-					state = PRESSRECORD;
 				}
 				
 				selpressed = 0;
@@ -502,7 +497,11 @@ int main(void)
 					push1pressed=0;
 			}
 //==============================================================			
-
+			if (push2pressed==1) {
+				state = PRESSRECORD;
+				
+				push2pressed=0;
+			}
 //==============================================================						
 			switch (state) { 
 				
@@ -624,9 +623,9 @@ void Pushbutton1_Init(void)
 	__HAL_RCC_GPIOE_CLK_ENABLE();
 	
 	GPIO_InitStruct.Pin = GPIO_PIN_14;
-	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
 	
 	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 	
@@ -864,8 +863,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 							push1pressed=1;
 							break;
 			case GPIO_PIN_11:    //push button 2					
-							BSP_LCD_GLASS_Clear();
-							BSP_LCD_GLASS_DisplayString((uint8_t*)"PE11");
+							//BSP_LCD_GLASS_Clear();
+							//BSP_LCD_GLASS_DisplayString((uint8_t*)"PE11");
+							push2pressed=1;
 							break;				
 			default://
 						//default

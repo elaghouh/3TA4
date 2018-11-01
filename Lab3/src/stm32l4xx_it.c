@@ -53,7 +53,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-//extern TIM_HandleTypeDef    Tim3_Handle, Tim4_Handle;
+extern TIM_HandleTypeDef Tim3_Handle, Tim4_Handle;
 extern RTC_HandleTypeDef RTCHandle;
 
 
@@ -217,18 +217,9 @@ void EXTI9_5_IRQHandler (void)
 void EXTI15_10_IRQHandler (void)
 {
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_14);  //PE14
+	
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);	//PE11
 }
-
-void TIM3_IRQHandler(void)
-{
-  
-}
-
-void TIM4_IRQHandler(void)
-{
-  
-}
-
 
 void RTC_Alarm_IRQHandler(void)
 {
