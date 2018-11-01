@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\lab3.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\lab3.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060422: Last Updated: Wed Oct 31 23:03:32 2018
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060422: Last Updated: Thu Nov 01 17:39:39 2018
 <BR><P>
 <H3>Maximum Stack Usage =        320 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -431,6 +431,7 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[6d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_LCD_Clear
 </UL>
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<LI><a href="#[c2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_DateShow
 <LI><a href="#[c0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_Config
 <LI><a href="#[bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_AlarmAConfig
 <LI><a href="#[a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_RTC_AlarmAEventCallback
@@ -446,6 +447,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BSP_LCD_GLASS_ScrollSentence
 <LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 <LI><a href="#[aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_TimeShow
+<LI><a href="#[c2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_DateShow
 <LI><a href="#[c0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_Config
 <LI><a href="#[bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_AlarmAConfig
 <LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_DisplayTime
@@ -502,7 +504,7 @@ Global Symbols
 <P><STRONG><a name="[7]"></a>DebugMon_Handler</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, stm32l4xx_it.o(i.DebugMon_Handler))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32l476xx.o(RESET)
 </UL>
-<P><STRONG><a name="[7b]"></a>EE_DisplayTime</STRONG> (Thumb, 260 bytes, Stack size 24 bytes, main.o(i.EE_DisplayTime))
+<P><STRONG><a name="[7b]"></a>EE_DisplayTime</STRONG> (Thumb, 242 bytes, Stack size 24 bytes, main.o(i.EE_DisplayTime))
 <BR><BR>[Stack]<UL><LI>Max Depth = 312<LI>Call Chain = EE_DisplayTime &rArr; I2C_ByteRead &rArr; I2C_Error &rArr; I2C_Init &rArr; I2C_MspInit &rArr; HAL_RCCEx_PeriphCLKConfig &rArr; RCCEx_PLLSAI2_Config
 </UL>
 <BR>[Calls]<UL><LI><a href="#[7d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;I2C_ByteRead
@@ -516,14 +518,13 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[80]"></a>EE_RecordTime</STRONG> (Thumb, 202 bytes, Stack size 16 bytes, main.o(i.EE_RecordTime))
-<BR><BR>[Stack]<UL><LI>Max Depth = 312<LI>Call Chain = EE_RecordTime &rArr; I2C_ByteWrite &rArr; I2C_Error &rArr; I2C_Init &rArr; I2C_MspInit &rArr; HAL_RCCEx_PeriphCLKConfig &rArr; RCCEx_PLLSAI2_Config
+<P><STRONG><a name="[80]"></a>EE_RecordTime</STRONG> (Thumb, 176 bytes, Stack size 8 bytes, main.o(i.EE_RecordTime))
+<BR><BR>[Stack]<UL><LI>Max Depth = 304<LI>Call Chain = EE_RecordTime &rArr; I2C_ByteWrite &rArr; I2C_Error &rArr; I2C_Init &rArr; I2C_MspInit &rArr; HAL_RCCEx_PeriphCLKConfig &rArr; RCCEx_PLLSAI2_Config
 </UL>
 <BR>[Calls]<UL><LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;I2C_Error
 <LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;I2C_ByteWrite
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_RTC_GetTime
 <LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_RTC_GetDate
-<LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_Delay
 </UL>
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -579,7 +580,7 @@ Global Symbols
 <LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;I2C_ByteWrite
 <LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BSP_LCD_GLASS_ScrollSentence
 <LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
-<LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_RecordTime
+<LI><a href="#[c2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_DateShow
 <LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_DisplayTime
 </UL>
 
@@ -607,7 +608,7 @@ Global Symbols
 <LI><a href="#[b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;I2C_MspInit
 <LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BSP_LED_Init
 <LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BSP_JOY_Init
-<LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pushbutton1_Init
+<LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pushbutton_Init
 </UL>
 
 <P><STRONG><a name="[67]"></a>HAL_GPIO_ReadPin</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, stm32l4xx_hal_gpio.o(i.HAL_GPIO_ReadPin))
@@ -777,7 +778,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;I2C_MspInit
 <LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BSP_JOY_Init
 <LI><a href="#[bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_AlarmAConfig
-<LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pushbutton1_Init
+<LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pushbutton_Init
 </UL>
 
 <P><STRONG><a name="[6a]"></a>HAL_NVIC_SetPriority</STRONG> (Thumb, 60 bytes, Stack size 16 bytes, stm32l4xx_hal_cortex.o(i.HAL_NVIC_SetPriority))
@@ -789,7 +790,7 @@ Global Symbols
 <LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_InitTick
 <LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BSP_JOY_Init
 <LI><a href="#[bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_AlarmAConfig
-<LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pushbutton1_Init
+<LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pushbutton_Init
 </UL>
 
 <P><STRONG><a name="[95]"></a>HAL_NVIC_SetPriorityGrouping</STRONG> (Thumb, 26 bytes, Stack size 0 bytes, stm32l4xx_hal_cortex.o(i.HAL_NVIC_SetPriorityGrouping))
@@ -1058,8 +1059,8 @@ Global Symbols
 <P><STRONG><a name="[8]"></a>PendSV_Handler</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, stm32l4xx_it.o(i.PendSV_Handler))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32l476xx.o(RESET)
 </UL>
-<P><STRONG><a name="[bd]"></a>Pushbutton1_Init</STRONG> (Thumb, 94 bytes, Stack size 40 bytes, main.o(i.Pushbutton1_Init))
-<BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = Pushbutton1_Init &rArr; HAL_GPIO_Init
+<P><STRONG><a name="[bd]"></a>Pushbutton_Init</STRONG> (Thumb, 94 bytes, Stack size 40 bytes, main.o(i.Pushbutton_Init))
+<BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = Pushbutton_Init &rArr; HAL_GPIO_Init
 </UL>
 <BR>[Calls]<UL><LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_NVIC_SetPriority
 <LI><a href="#[6b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_NVIC_EnableIRQ
@@ -1127,12 +1128,15 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[c2]"></a>RTC_DateShow</STRONG> (Thumb, 86 bytes, Stack size 16 bytes, main.o(i.RTC_DateShow))
+<P><STRONG><a name="[c2]"></a>RTC_DateShow</STRONG> (Thumb, 174 bytes, Stack size 16 bytes, main.o(i.RTC_DateShow))
 <BR><BR>[Stack]<UL><LI>Max Depth = 136<LI>Call Chain = RTC_DateShow &rArr; BSP_LCD_GLASS_ScrollSentence &rArr; BSP_LCD_GLASS_DisplayString &rArr; WriteChar &rArr; HAL_LCD_Write
 </UL>
 <BR>[Calls]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_RTC_GetTime
 <LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_RTC_GetDate
+<LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HAL_Delay
 <LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BSP_LCD_GLASS_ScrollSentence
+<LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BSP_LCD_GLASS_DisplayString
+<LI><a href="#[6c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BSP_LCD_GLASS_Clear
 <LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_AlarmA_IT_Enable
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_AlarmA_IT_Disable
 <LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2sprintf
@@ -1208,7 +1212,7 @@ Global Symbols
 
 <P><STRONG><a name="[da]"></a>__scatterload_zeroinit</STRONG> (Thumb, 14 bytes, Stack size unknown bytes, handlers.o(i.__scatterload_zeroinit), UNUSED)
 
-<P><STRONG><a name="[5b]"></a>main</STRONG> (Thumb, 1154 bytes, Stack size 8 bytes, main.o(i.main))
+<P><STRONG><a name="[5b]"></a>main</STRONG> (Thumb, 1380 bytes, Stack size 8 bytes, main.o(i.main))
 <BR><BR>[Stack]<UL><LI>Max Depth = 320<LI>Call Chain = main &rArr; BSP_LCD_GLASS_Init &rArr; LCD_MspInit &rArr; HAL_RCCEx_PeriphCLKConfig &rArr; RCCEx_PLLSAI2_Config
 </UL>
 <BR>[Calls]<UL><LI><a href="#[b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;I2C_Init
@@ -1229,7 +1233,7 @@ Global Symbols
 <LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_AlarmA_IT_Enable
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_AlarmA_IT_Disable
 <LI><a href="#[bf]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RTC_AlarmAConfig
-<LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pushbutton1_Init
+<LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Pushbutton_Init
 <LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_RecordTime
 <LI><a href="#[7b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;EE_DisplayTime
 <LI><a href="#[c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SystemClock_Config

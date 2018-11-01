@@ -63,8 +63,10 @@ NOTE: students can also configure the TimeStamp pin
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+// Main states we have to worry about. Others (Like which parameter we're setting) are all similar, so we can just use a variable to keep track of them
 typedef enum SystemState{TIMESHOW,DATESHOW,PRESSSHOW,TIMEDATESET,PRESSRECORD} SystemState;
 typedef enum timedatesetpos{SECOND_POS=0,MINUTE_POS=1,HOUR_POS=2,YEAR_POS=3,MONTH_POS=4,DAY_POS=5,DATE_POS=6} timedatesetpos;
+typedef enum weekdays{SUNDAY=1,MONDAY=2,TUESDAY=3,WEDNESDAY=4,THURSDAY=5,FRIDAY=6,SATURDAY=7} weekday;
 SystemState state = TIMESHOW;
 
 I2C_HandleTypeDef  pI2c_Handle;
@@ -82,22 +84,24 @@ __IO uint16_t memLocation; //pick any location within range
 char lcd_buffer[6];    // LCD display buffer
 char timestring[10]={0};  //   
 char datestring[12]={0};
+char weekdaystring[6]={0};
 
 
-uint8_t wd=0x01, dd=0x01, mo=0x0A, yy=0x18, ss=0x00, mm=0x00, hh=0x00; // for weekday, day, month, year, second, minute, hour
+uint8_t dd=0x01, mo=0x0A, yy=0x18, ss=0x00, mm=0x00, hh=0x00; // for weekday, day, month, year, second, minute, hour
+weekday wd=0x01;
 
 __IO uint32_t SEL_Pressed_StartTick;   //sysTick when the User button is pressed
 
 __IO uint8_t leftpressed, rightpressed, uppressed, downpressed, selpressed, push1pressed,push2pressed;  // button pressed 
-__IO uint8_t  sel_held;   // if the selection button is held for a while (>800ms)
+__IO uint8_t  sel_held;   // if the selection button is held for a while (>1000ms)
 timedatesetpos settingpos = SECOND_POS;
-uint8_t allowchange = 0;
+uint8_t allowchange = 0;		//Use it to allow the time and date to be changed when sel pressed
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 
-void Pushbutton1_Init(void);
+void Pushbutton_Init(void);
 void RTC_Config(void);
 void RTC_AlarmAConfig(void);
 void RTC_DateShow(RTC_HandleTypeDef *hrtc);
@@ -150,7 +154,7 @@ int main(void)
 	
 	BSP_JOY_Init(JOY_MODE_EXTI);
 
-	Pushbutton1_Init();
+	Pushbutton_Init();
 
 	BSP_LCD_GLASS_DisplayString((uint8_t*)"MT3TA4");	
 	HAL_Delay(1000);
@@ -163,10 +167,10 @@ int main(void)
 	
 	I2C_Init(&pI2c_Handle);
 
-	memLocation=I2C_ByteRead(&pI2c_Handle,EEPROM_ADDRESS,0x0000);
+	memLocation=I2C_ByteRead(&pI2c_Handle,EEPROM_ADDRESS,0x0000);		// The memory address of the last recorded button push is recorded in 0x0000 address of EEPROM
 	HAL_Delay(1000);
 
-	//I2C_ByteWrite(&pI2c_Handle,EEPROM_ADDRESS, 0x0000, 0x0001);
+	//I2C_ByteWrite(&pI2c_Handle,EEPROM_ADDRESS, 0x0000, 0x0001);		// use this to "restart" the time log in the EEPROM. Only run it once to reset 
 
 /*********************Testing I2C EEPROM------------------
 
@@ -253,14 +257,46 @@ int main(void)
 			if (selpressed==1)  {
 				if (state == TIMEDATESET) {
 					allowchange = 1;
-					if (settingpos < 3) {
+					if (settingpos < 3) {		//Based on timedatepos enum, values less than 3 are time values, Makes changing the values easier if you can see the whole time string
 							BSP_LCD_GLASS_Clear();
 							BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
 						}
-					else if (settingpos >= 3 && settingpos < 7) {
+					else if (settingpos >= 3 && settingpos < 6) {
 							BSP_LCD_GLASS_Clear();
 							BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
 						}
+					else if (settingpos == 6) {
+							switch(wd) {
+								case SUNDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"SUN");
+									break;
+								case MONDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"MON");
+									break;
+								case TUESDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"TUES");
+									break;
+								case WEDNESDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"WED");
+									break;
+								case THURSDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"THUR");
+									break;
+								case FRIDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"FRI");
+									break;
+								case SATURDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"SAT");
+									break;
+							}
+					}
 				}
 				
 				selpressed = 0;
@@ -308,9 +344,41 @@ int main(void)
 						BSP_LCD_GLASS_Clear();
 						BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
 					}
-					else if (settingpos >= 3 && settingpos < 7) {
+					else if (settingpos >= 3 && settingpos < 6) {
 						BSP_LCD_GLASS_Clear();
 						BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
+					}
+					else if (settingpos == 6) {
+							switch(wd) {
+								case SUNDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"SUN");
+									break;
+								case MONDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"MON");
+									break;
+								case TUESDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"TUES");
+									break;
+								case WEDNESDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"WED");
+									break;
+								case THURSDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"THUR");
+									break;
+								case FRIDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"FRI");
+									break;
+								case SATURDAY:
+									BSP_LCD_GLASS_Clear();
+									BSP_LCD_GLASS_DisplayString((uint8_t*)"SAT");
+									break;
+							}
 					}
 				}
 				uppressed=0;
@@ -321,7 +389,7 @@ int main(void)
 				if (state == TIMEDATESET && allowchange == 1) {
 					switch (settingpos) {
 						case SECOND_POS:
-							if (ss == 1)
+							if (ss == 0)		// We're using uint, so have to watch for negative numbers
 								ss = 59;
 							else
 								ss = (ss - 1)%60;
@@ -339,7 +407,7 @@ int main(void)
 								hh = (hh - 1)%24;
 							break;
 						case DATE_POS:
-							if (wd == 1)
+							if (wd == 1)		//Can't have 0th weekday
 								wd = 7;
 							else
 								wd = (wd - 1)%8;
@@ -348,7 +416,7 @@ int main(void)
 							if (dd == 1)
 								dd = 31;
 							else
-								dd = (dd - 1)%32;
+								dd = (dd - 1)%32;		//Max month has 31 days, and you can't have 0th month day
 							break;
 						case MONTH_POS:
 							if (mo == 1)
@@ -367,13 +435,45 @@ int main(void)
 						sprintf(timestring,"%02u%02u%02u",hh,mm,ss); 
 						sprintf(datestring,"%02u%02u%02u",dd,mo,yy);
 						
-						if (settingpos < 3) {
+						if (settingpos < 3) {		//Based on timedatepos enum, values less than 3 are time values, Makes changing the values easier if you can see the whole time string
 							BSP_LCD_GLASS_Clear();
 							BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
 						}
-						else if (settingpos >= 3 && settingpos < 7) {
+						else if (settingpos >= 3 && settingpos < 6) {
 							BSP_LCD_GLASS_Clear();
 							BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
+						}
+						else if (settingpos == 6) {
+								switch(wd) {
+									case SUNDAY:
+										BSP_LCD_GLASS_Clear();
+										BSP_LCD_GLASS_DisplayString((uint8_t*)"SUN");
+										break;
+									case MONDAY:
+										BSP_LCD_GLASS_Clear();
+										BSP_LCD_GLASS_DisplayString((uint8_t*)"MON");
+										break;
+									case TUESDAY:
+										BSP_LCD_GLASS_Clear();
+										BSP_LCD_GLASS_DisplayString((uint8_t*)"TUES");
+										break;
+									case WEDNESDAY:
+										BSP_LCD_GLASS_Clear();
+										BSP_LCD_GLASS_DisplayString((uint8_t*)"WED");
+										break;
+									case THURSDAY:
+										BSP_LCD_GLASS_Clear();
+										BSP_LCD_GLASS_DisplayString((uint8_t*)"THUR");
+										break;
+									case FRIDAY:
+										BSP_LCD_GLASS_Clear();
+										BSP_LCD_GLASS_DisplayString((uint8_t*)"FRI");
+										break;
+									case SATURDAY:
+										BSP_LCD_GLASS_Clear();
+										BSP_LCD_GLASS_DisplayString((uint8_t*)"SAT");
+										break;
+								}
 						}
 				}
 	
@@ -381,14 +481,14 @@ int main(void)
 			}
 //==============================================================		 
 			if (leftpressed==1) {
-					allowchange = 0;
+					allowchange = 0;		// Variable allows for changing the time/date. Reset it to 0 so that they have to press sel again to change the next parameter
 				
 					if (state == PRESSSHOW) {
 						RTC_AlarmA_IT_Enable(&RTCHandle);
 						state = TIMESHOW;
 					}
 					else if (state == TIMEDATESET) {
-						settingpos = (settingpos + 1) % 7;
+						settingpos = (settingpos + 1) % 7;	//Timedatepos enum has 7 enumerations, with position defined with a number
 						
 						BSP_LCD_GLASS_Clear();
 						switch(settingpos) {
@@ -414,17 +514,6 @@ int main(void)
 								BSP_LCD_GLASS_DisplayString((uint8_t*)"YEAR");
 								break;
 						}
-					
-						/*sprintf(timestring,"%02u%02u%02u",hh,mm,ss); 
-						sprintf(datestring,"%02u%02u%02u",dd,mo,yy);
-						if (settingpos < 3) {
-							BSP_LCD_GLASS_Clear();
-							BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
-						}
-						else if (settingpos >= 3 && settingpos < 7) {
-							BSP_LCD_GLASS_Clear();
-							BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
-						}*/
 					}
 					else {
 						state = PRESSSHOW;
@@ -436,14 +525,11 @@ int main(void)
 				allowchange = 0;
 				
 				if (state == TIMEDATESET) {
-					if (settingpos == 0)
+					if (settingpos == 0)		// Using uints, so must avoid negatives
 						settingpos = 6;
 					else {
 						settingpos = (settingpos - 1) % 7;
 					}
-					
-					//sprintf(timestring,"%02u%02u%02u",hh,mm,ss); 
-					//sprintf(datestring,"%02u%02u%02u",dd,mo,yy);
 					
 					BSP_LCD_GLASS_Clear();
 					switch(settingpos) {
@@ -469,29 +555,20 @@ int main(void)
 							BSP_LCD_GLASS_DisplayString((uint8_t*)"YEAR");
 							break;
 					}
-					/*
-					if (settingpos < 3) {
-						BSP_LCD_GLASS_Clear();
-						BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
-					}
-					else if (settingpos >= 3 && settingpos < 7) {
-						BSP_LCD_GLASS_Clear();
-						BSP_LCD_GLASS_DisplayString((uint8_t*)datestring);
-					}*/
 				}
 				rightpressed=0;
 			}
 //==============================================================							
 			if (push1pressed==1) {
 					if (state == TIMEDATESET) {
-						settingpos = SECOND_POS;
+						settingpos = SECOND_POS;		// Reset position for next time you want to set
 						state=TIMESHOW;
-						RTC_Config();
+						RTC_Config();			//re-configure rtc with new values. Won't work if you don't reconfigure!!!
 						RTC_AlarmA_IT_Enable(&RTCHandle);
 					}
 					else {
 						BSP_LCD_GLASS_Clear();
-						BSP_LCD_GLASS_DisplayString((uint8_t*)"SECS");
+						BSP_LCD_GLASS_DisplayString((uint8_t*)"SECS");		// Starting position always seconds first
 						state=TIMEDATESET;
 					}
 					push1pressed=0;
@@ -522,10 +599,11 @@ int main(void)
 				case PRESSSHOW:
 					EE_DisplayTime(&RTCHandle);
 					state=TIMESHOW;
+					if (leftpressed == 1) leftpressed = 0;
 					break;
 				
 				case TIMEDATESET:
-					RTC_AlarmA_IT_Disable(&RTCHandle);
+					RTC_AlarmA_IT_Disable(&RTCHandle);		// So that the time display doesn't interrupt setting it
 					break;
 				
 			} //end of switch					
@@ -616,25 +694,25 @@ void SystemClock_Config(void)
   __HAL_RCC_PWR_CLK_DISABLE();      
 }
 //after RCC configuration, for timmer 2---7, which are one APB1, the TIMxCLK from RCC is 4MHz
-void Pushbutton1_Init(void)
+void Pushbutton_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
 	
 	__HAL_RCC_GPIOE_CLK_ENABLE();
 	
 	GPIO_InitStruct.Pin = GPIO_PIN_14;
-	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+	GPIO_InitStruct.Pull = GPIO_PULLDOWN;				// Must connect pin to VCC on breadboard
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;					//Pin connected to VCC on board, so we want to catch rising edge
 	
 	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 	
 	GPIO_InitStruct.Pin = GPIO_PIN_11;
-	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;					// Must connect pin to GND on breadboard with this config
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;		// Want to catch transition from high to low (b/c pullup configured)
 	
-	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);		// Have to reconfigure the port
 	
 	HAL_NVIC_SetPriority((IRQn_Type)EXTI15_10_IRQn, 3, 0x00);
 	HAL_NVIC_EnableIRQ((IRQn_Type)EXTI15_10_IRQn);
@@ -678,7 +756,7 @@ void RTC_Config(void) {
 				RTCHandle.Instance = RTC;
 				RTCHandle.Init.HourFormat = RTC_HOURFORMAT_24;
 				
-				RTCHandle.Init.AsynchPrediv = 127; 
+				RTCHandle.Init.AsynchPrediv = 127; 			// Using equation in reference manual
 				RTCHandle.Init.SynchPrediv = 255; 
 				
 				
@@ -847,10 +925,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			case GPIO_PIN_0: 		               //SELECT button					
 						selpressed=1;	
 						break;	
-			case GPIO_PIN_1:     //left button						
+			case GPIO_PIN_1:     //left button
 							leftpressed=1;
 							break;
-			case GPIO_PIN_2:    //right button						  to play again.
+			case GPIO_PIN_2:    //right button
 							rightpressed=1;			
 							break;
 			case GPIO_PIN_3:    //up button						
@@ -859,12 +937,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			case GPIO_PIN_5:    //down button						
 							downpressed=1;
 							break;
-			case GPIO_PIN_14:    //push button 1
+			case GPIO_PIN_14:    //push button 1 (PE14)
 							push1pressed=1;
 							break;
-			case GPIO_PIN_11:    //push button 2					
-							//BSP_LCD_GLASS_Clear();
-							//BSP_LCD_GLASS_DisplayString((uint8_t*)"PE11");
+			case GPIO_PIN_11:    //push button 2	(PE11)			
 							push2pressed=1;
 							break;				
 			default://
@@ -890,16 +966,12 @@ HAL_StatusTypeDef EE_RecordTime(RTC_HandleTypeDef *hrtc)
     I2C_Error(&pI2c_Handle);
 	}
 	
-	HAL_Delay(1000);
-	
 	EE_status=I2C_ByteWrite(&pI2c_Handle,EEPROM_ADDRESS, memLocation+1, mm);
   
   if(EE_status != HAL_OK)
   {
     I2C_Error(&pI2c_Handle);
 	}
-	
-	HAL_Delay(1000);
 	
 	EE_status=I2C_ByteWrite(&pI2c_Handle,EEPROM_ADDRESS, memLocation+2, hh);
   
@@ -908,30 +980,26 @@ HAL_StatusTypeDef EE_RecordTime(RTC_HandleTypeDef *hrtc)
     I2C_Error(&pI2c_Handle);
 	}
 	
-	if (memLocation < 0xFFFF)
+	if (memLocation < 0xFFFD)
 	{
-		memLocation=memLocation+3;
+		memLocation=memLocation+3;		// As long as we have 3 spots open for next timestamp write (3 bytes), increment memlocation by 3
 		
-		EE_status=I2C_ByteWrite(&pI2c_Handle,EEPROM_ADDRESS, 0x0000, memLocation);
+		EE_status=I2C_ByteWrite(&pI2c_Handle,EEPROM_ADDRESS, 0x0000, memLocation); //update memlocation pointer in EEPROM in case of power loss
   
 		if(EE_status != HAL_OK)
 		{
 			I2C_Error(&pI2c_Handle);
 		}
-	
-		HAL_Delay(1000);
 	}
 	else
 	{
-		memLocation=0x0001;
-		EE_status=I2C_ByteWrite(&pI2c_Handle,EEPROM_ADDRESS, 0x0000, memLocation);
+		memLocation=0x0001;					// If there is no space for the next timestamp write, overwrite oldest timestamps
+		EE_status=I2C_ByteWrite(&pI2c_Handle,EEPROM_ADDRESS, 0x0000, memLocation);	// update memlocation pointer
   
 		if(EE_status != HAL_OK)
 		{
 			I2C_Error(&pI2c_Handle);
 		}
-	
-		HAL_Delay(1000);
 	}
 	//RTC_AlarmA_IT_Enable(hrtc);
 	
@@ -942,41 +1010,42 @@ void EE_DisplayTime(RTC_HandleTypeDef *hrtc)
 {
 	RTC_AlarmA_IT_Disable(hrtc);
 	
-	if (memLocation < 0x06)
+	if (memLocation < 0x06)		//This would mean there haven't been 2 presses yet saved in eeprom
 	{
 		BSP_LCD_GLASS_Clear();
 		BSP_LCD_GLASS_DisplayString((uint8_t*)"TOOFEW");
 	}
 	else 
-	{
-		hh=I2C_ByteRead(&pI2c_Handle,EEPROM_ADDRESS, memLocation-1);
-		HAL_Delay(1000);
+	{		
+		hh=I2C_ByteRead(&pI2c_Handle,EEPROM_ADDRESS, memLocation-1);	// DO NOT change memLocation value, we still want it pointing at latest timestamp
+		
 		mm=I2C_ByteRead(&pI2c_Handle,EEPROM_ADDRESS,memLocation-2);
-		HAL_Delay(1000);
+		
 		ss=I2C_ByteRead(&pI2c_Handle,EEPROM_ADDRESS,memLocation-3);
 		
 		sprintf(timestring,"%02u%02u%02u",hh,mm,ss);
 		
 		BSP_LCD_GLASS_Clear();
 		BSP_LCD_GLASS_DisplayString((uint8_t*)"time1");
-		HAL_Delay(1000);
+		HAL_Delay(500);
 		BSP_LCD_GLASS_Clear();
 		BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
+		HAL_Delay(500);
 		
 		hh=I2C_ByteRead(&pI2c_Handle,EEPROM_ADDRESS, memLocation-4);
-		HAL_Delay(1000);
+		
 		mm=I2C_ByteRead(&pI2c_Handle,EEPROM_ADDRESS,memLocation-5);
-		HAL_Delay(1000);
+		
 		ss=I2C_ByteRead(&pI2c_Handle,EEPROM_ADDRESS,memLocation-6);
 		
 		sprintf(timestring,"%02u%02u%02u",hh,mm,ss);
-
+		
 		BSP_LCD_GLASS_Clear();
 		BSP_LCD_GLASS_DisplayString((uint8_t*)"time2");
-		HAL_Delay(1000);
+		HAL_Delay(500);
 		BSP_LCD_GLASS_Clear();
 		BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
-		HAL_Delay(1000);
+		HAL_Delay(500);
 		BSP_LCD_GLASS_Clear();
 	}
 	
@@ -986,14 +1055,15 @@ void EE_DisplayTime(RTC_HandleTypeDef *hrtc)
 void RTC_TimeShow(RTC_HandleTypeDef *hrtc)
 {
 	HAL_RTC_GetTime(hrtc, &RTC_TimeStructure, RTC_FORMAT_BIN);
-	HAL_RTC_GetDate(hrtc, &RTC_DateStructure, RTC_FORMAT_BIN);
+	HAL_RTC_GetDate(hrtc, &RTC_DateStructure, RTC_FORMAT_BIN);	// Have to call both because GetTime locks and GetDate unlocks
 	
 	ss=RTC_TimeStructure.Seconds;
 	mm=RTC_TimeStructure.Minutes;
 	hh=RTC_TimeStructure.Hours;
 	
 	sprintf(timestring,"%02u%02u%02u",hh,mm,ss); 
-	
+
+	//BSP_LCD_GLASS_Clear();
 	BSP_LCD_GLASS_DisplayString((uint8_t*)timestring);
 }
 
@@ -1003,11 +1073,44 @@ void RTC_DateShow(RTC_HandleTypeDef *hrtc)
 	HAL_RTC_GetTime(hrtc, &RTC_TimeStructure, RTC_FORMAT_BIN);
 	HAL_RTC_GetDate(hrtc, &RTC_DateStructure, RTC_FORMAT_BIN);
 
+	wd=RTC_DateStructure.WeekDay;
 	dd=RTC_DateStructure.Date;
 	mo=RTC_DateStructure.Month;
 	yy=RTC_DateStructure.Year;
+
+	sprintf(datestring," %02u/%02u/%02u ",dd,mo,yy);
 	
-	sprintf(datestring," d%02u m%02u y%02u ",dd,mo,yy);
+	switch(wd) {
+		case SUNDAY:
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString((uint8_t*)"SUN");
+			break;
+		case MONDAY:
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString((uint8_t*)"MON");
+			break;
+		case TUESDAY:
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString((uint8_t*)"TUES");
+			break;
+		case WEDNESDAY:
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString((uint8_t*)"WED");
+			break;
+		case THURSDAY:
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString((uint8_t*)"THUR");
+			break;
+		case FRIDAY:
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString((uint8_t*)"FRI");
+			break;
+		case SATURDAY:
+			BSP_LCD_GLASS_Clear();
+			BSP_LCD_GLASS_DisplayString((uint8_t*)"SAT");
+			break;
+	}
+	HAL_Delay(500);
 	
 	BSP_LCD_GLASS_ScrollSentence((uint8_t*)datestring,1,500);
 	RTC_AlarmA_IT_Enable(&RTCHandle);
