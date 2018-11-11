@@ -47,7 +47,11 @@
   */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef enum{LED_TOGGLE_STATE, LED_OFF_STATE, LED_ON_STATE} FSM_State;
+typedef enum{
+	LED_TOGGLE_STATE, 
+	LED_OFF_STATE, 
+	LED_ON_STATE
+} FSM_State;
 
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

@@ -268,8 +268,8 @@ typedef struct
 /** @defgroup RTC_Input_parameter_format_definitions RTC Input Parameter Format Definitions
   * @{
   */
-#define RTC_FORMAT_BIN                  ((uint32_t)0x000000000)
-#define RTC_FORMAT_BCD                  ((uint32_t)0x000000001)
+#define RTC_FORMAT_BIN                  ((uint32_t)0x000000001)
+#define RTC_FORMAT_BCD                  ((uint32_t)0x000000000)
 /**
   * @}
   */
