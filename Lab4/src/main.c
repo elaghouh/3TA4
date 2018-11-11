@@ -188,7 +188,7 @@ int main(void)
 				displaySetPoint();
 				break;
 			case FANON:
-				if (ADC1ConvertedValue >= (setPoint * 1/0.02442)) {
+				if (ADC1ConvertedValue >= (setPoint * 1/0.02442)) {	// To maker sure that one dip below setPoint doesn't retain belowGood value
 					belowGood=0;
 				}
 				if (ADC1ConvertedValue < (setPoint * 1/0.02442)) {
