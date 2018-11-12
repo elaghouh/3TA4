@@ -147,11 +147,27 @@ void HAL_TIM_OC_MspInit(TIM_HandleTypeDef *htim)
 
 void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
 {	
+	GPIO_InitTypeDef   GPIO_InitStruct;
+	//TIM_HandleTypeDef   Tim4_Handle;
+	//Tim4_Handle.Instance = TIM4;
+	
+	__HAL_RCC_TIM4_CLK_ENABLE();
 
+  /* Enable GPIO Channels Clock */
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
- 
+  /* Configure PA.08 (connected to D7 (pin 23 in CN10 connector)) (TIM1_Channel1), PA.09 (connected to D8 (pin 21 in CN10 connector)) (TIM1_Channel2), PA.10 (connected to D2 (pin 33 in CN10 connector)) (TIM1_Channel3),
+     PA.11 (pin 14 in CN10 connector) (TIM1_Channel4) in output, push-pull, alternate function mode
+  */
+  /* Common configuration for all channels */
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 
-
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
+  GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	
 }
 
 

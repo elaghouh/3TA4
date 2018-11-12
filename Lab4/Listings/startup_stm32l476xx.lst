@@ -720,7 +720,7 @@ ARM Macro Assembler    Page 12
 
 
 .o -I.\RTE\_src -IC:\Keil_v5\ARM\PACK\ARM\CMSIS\5.4.0\CMSIS\Core\Include -IC:\K
-eil_v5\ARM\PACK\Keil\MDK-Middleware\7.7.0\Board -IC:\Keil_v5\ARM\PACK\Keil\STM3
+eil_v5\ARM\PACK\Keil\MDK-Middleware\7.4.0\Board -IC:\Keil_v5\ARM\PACK\Keil\STM3
 2L4xx_DFP\1.4.0\Device\Include --predefine="__EVAL SETA 1" --predefine="__MICRO
 LIB SETA 1" --predefine="__UVISION_VERSION SETA 523" --predefine="_RTE_ SETA 1"
  --predefine="STM32L476xx SETA 1" --list=.\listings\startup_stm32l476xx.lst RTE

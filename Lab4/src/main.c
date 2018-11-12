@@ -54,6 +54,8 @@
   */
 
 /* Private typedef -----------------------------------------------------------*/
+#define  PERIOD_VALUE       (uint32_t)(666 - 1)                /* Period Value  */
+#define  PULSE1_VALUE       (uint32_t)(PERIOD_VALUE/2)        /* Capture Compare 1 Value  */
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -71,8 +73,9 @@ ADC_AnalogWDGConfTypeDef Adc_Watchdog;
 
 TIM_HandleTypeDef    Tim3_Handle, Tim4_Handle;
 TIM_OC_InitTypeDef Tim3_OCInitStructure, Tim4_OCInitStructure;
-uint16_t TIM3_Prescaler;   
+uint16_t TIM3_Prescaler;    
 uint16_t TIM3_CCR;   //make it interrupt every 500 ms, halfsecond.
+uint16_t TIM4_Prescaler;  
 
 
 __IO uint32_t ADC1ConvertedValue=0;   //if declare it as 16t, it will not work.
@@ -85,7 +88,7 @@ uint16_t tempAboveSetPoint = 0;
 uint16_t belowGood = 0;							// variable to make sure you are below setPoint for adequate time
 
 double measuredTemp; 
-int a; 
+
 
 
 
@@ -103,6 +106,9 @@ void displayTempString(void);
 void displaySetPoint(void);
 void TIM3_Config(void);
 void TIM3_OC_Config(void);
+void TIM4_Config(void);
+void TIM4_PWM_Config(void);
+
 
 /* Private functions ---------------------------------------------------------*/
 /**
@@ -145,8 +151,11 @@ int main(void)
 	ADC_Config();
  
 	TIM3_Config();
-
 	TIM3_OC_Config();
+	
+	TIM4_Config();
+	TIM4_PWM_Config();
+	
 
   while (1)
   {
@@ -373,7 +382,42 @@ void ADC_Config(void)
     Error_Handler();
   }
 }
+void TIM4_Config(void){
+	TIM4_Prescaler = (uint16_t)(SystemCoreClock/16000000) - 1;		//16MHz
+	
+	Tim4_Handle.Instance = TIM4;
 
+  Tim4_Handle.Init.Prescaler       = TIM4_Prescaler;
+  Tim4_Handle.Init.Period            = PERIOD_VALUE;
+  Tim4_Handle.Init.ClockDivision     = 0;
+  Tim4_Handle.Init.CounterMode       = TIM_COUNTERMODE_UP;
+  Tim4_Handle.Init.RepetitionCounter = 0;
+  if (HAL_TIM_PWM_Init(&Tim4_Handle) != HAL_OK)
+  {
+    /* Initialization Error */
+    Error_Handler();
+  }
+}
+
+void TIM4_PWM_Config(void){
+
+  Tim4_OCInitStructure.OCMode       = TIM_OCMODE_PWM1;
+  Tim4_OCInitStructure.OCPolarity   = TIM_OCPOLARITY_HIGH;
+  Tim4_OCInitStructure.OCFastMode   = TIM_OCFAST_DISABLE;
+  Tim4_OCInitStructure.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
+  Tim4_OCInitStructure.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+
+  Tim4_OCInitStructure.OCIdleState  = TIM_OCIDLESTATE_RESET;
+
+  /* Set the pulse value for channel 1 */
+  Tim4_OCInitStructure.Pulse = PULSE1_VALUE;
+	
+  if (HAL_TIM_PWM_ConfigChannel(&Tim4_Handle, &Tim4_OCInitStructure, TIM_CHANNEL_1) != HAL_OK)
+  {
+    /* Configuration Error */
+    Error_Handler();
+  }
+}
 void TIM3_Config(void)
 {
 	TIM3_Prescaler = (uint16_t)(SystemCoreClock/10000) - 1;		//10KHz

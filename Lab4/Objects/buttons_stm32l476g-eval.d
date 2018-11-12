@@ -30,4 +30,4 @@
 .\objects\buttons_stm32l476g-eval.o: ..\STM32Cube_FW_L4_V1.8.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_pwr_ex.h
 .\objects\buttons_stm32l476g-eval.o: ..\STM32Cube_FW_L4_V1.8.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_tim.h
 .\objects\buttons_stm32l476g-eval.o: ..\STM32Cube_FW_L4_V1.8.0\Drivers\STM32L4xx_HAL_Driver\Inc\stm32l4xx_hal_tim_ex.h
-.\objects\buttons_stm32l476g-eval.o: C:\Keil_v5\ARM\PACK\Keil\MDK-Middleware\7.7.0\Board\Board_Buttons.h
+.\objects\buttons_stm32l476g-eval.o: C:\Keil_v5\ARM\PACK\Keil\MDK-Middleware\7.4.0\Board\Board_Buttons.h
