@@ -73,6 +73,7 @@ ADC_AnalogWDGConfTypeDef Adc_Watchdog;
 
 TIM_HandleTypeDef    Tim3_Handle, Tim4_Handle;
 TIM_OC_InitTypeDef Tim3_OCInitStructure, Tim4_OCInitStructure;
+
 uint16_t TIM3_Prescaler;    
 uint16_t TIM3_CCR;   //make it interrupt every 500 ms, halfsecond.
 uint16_t TIM4_Prescaler;  
@@ -106,7 +107,6 @@ void displayTempString(void);
 void displaySetPoint(void);
 void TIM3_Config(void);
 void TIM3_OC_Config(void);
-void TIM4_Config(void);
 void TIM4_PWM_Config(void);
 
 
@@ -153,7 +153,7 @@ int main(void)
 	TIM3_Config();
 	TIM3_OC_Config();
 	
-	TIM4_Config();
+
 	TIM4_PWM_Config();
 	
 
@@ -382,7 +382,11 @@ void ADC_Config(void)
     Error_Handler();
   }
 }
-void TIM4_Config(void){
+
+
+
+void TIM4_PWM_Config(void){
+	
 	TIM4_Prescaler = (uint16_t)(SystemCoreClock/16000000) - 1;		//16MHz
 	
 	Tim4_Handle.Instance = TIM4;
@@ -392,14 +396,12 @@ void TIM4_Config(void){
   Tim4_Handle.Init.ClockDivision     = 0;
   Tim4_Handle.Init.CounterMode       = TIM_COUNTERMODE_UP;
   Tim4_Handle.Init.RepetitionCounter = 0;
-  if (HAL_TIM_PWM_Init(&Tim4_Handle) != HAL_OK)
+
+	 if (HAL_TIM_PWM_Init(&Tim4_Handle) != HAL_OK)
   {
     /* Initialization Error */
     Error_Handler();
   }
-}
-
-void TIM4_PWM_Config(void){
 
   Tim4_OCInitStructure.OCMode       = TIM_OCMODE_PWM1;
   Tim4_OCInitStructure.OCPolarity   = TIM_OCPOLARITY_HIGH;
@@ -408,15 +410,22 @@ void TIM4_PWM_Config(void){
   Tim4_OCInitStructure.OCNIdleState = TIM_OCNIDLESTATE_RESET;
 
   Tim4_OCInitStructure.OCIdleState  = TIM_OCIDLESTATE_RESET;
+	Tim4_OCInitStructure.Pulse = PULSE1_VALUE;	
+	
+
 
   /* Set the pulse value for channel 1 */
-  Tim4_OCInitStructure.Pulse = PULSE1_VALUE;
-	
   if (HAL_TIM_PWM_ConfigChannel(&Tim4_Handle, &Tim4_OCInitStructure, TIM_CHANNEL_1) != HAL_OK)
   {
     /* Configuration Error */
     Error_Handler();
   }
+	
+	if (HAL_TIM_PWM_Start(&Tim4_Handle, TIM_CHANNEL_1))
+	{
+		Error_Handler();
+	}
+
 }
 void TIM3_Config(void)
 {
