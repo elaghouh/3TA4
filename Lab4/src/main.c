@@ -85,6 +85,7 @@ uint16_t tempAboveSetPoint = 0;
 uint16_t belowGood = 0;							// variable to make sure you are below setPoint for adequate time
 
 double measuredTemp; 
+int a; 
 
 
 
