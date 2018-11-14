@@ -55,14 +55,13 @@
 
 /* Private typedef -----------------------------------------------------------*/
 #define  PERIOD_VALUE       (uint32_t)(666 - 1)                /* Period Value  */
-#define  PULSE1_VALUE       (uint32_t)(PERIOD_VALUE/2)        /* Capture Compare 1 Value  */
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 typedef enum state{
 	SHOWTEMP,
 	SETPOINT,
-	FANON
+	FANON,
 } state;
 
 __IO HAL_StatusTypeDef Hal_status;  //HAL_ERROR, HAL_TIMEOUT, HAL_OK, of HAL_BUSY 
@@ -72,7 +71,7 @@ ADC_ChannelConfTypeDef Adc_Channel;
 ADC_AnalogWDGConfTypeDef Adc_Watchdog;
 
 TIM_HandleTypeDef    Tim3_Handle, Tim4_Handle;
-TIM_OC_InitTypeDef Tim3_OCInitStructure, Tim4_OCInitStructure;
+TIM_OC_InitTypeDef Tim3_OCInitStructure, PWMConfig;
 
 uint16_t TIM3_Prescaler;    
 uint16_t TIM3_CCR;   //make it interrupt every 500 ms, halfsecond.
@@ -82,6 +81,7 @@ uint16_t TIM4_Prescaler;
 __IO uint32_t ADC1ConvertedValue=0;   //if declare it as 16t, it will not work.
 char temperatureString[6] = {0};
 char setPointString[6] = {0};
+double Diffrence = 0; 
 
 
 volatile double  setPoint=23.5;
@@ -89,6 +89,8 @@ uint16_t tempAboveSetPoint = 0;
 uint16_t belowGood = 0;							// variable to make sure you are below setPoint for adequate time
 
 double measuredTemp; 
+
+uint16_t PULSE1_VALUE = 0 ; 
 
 
 
@@ -108,6 +110,7 @@ void displaySetPoint(void);
 void TIM3_Config(void);
 void TIM3_OC_Config(void);
 void TIM4_PWM_Config(void);
+void Set_Duty(double duty);
 
 
 /* Private functions ---------------------------------------------------------*/
@@ -159,6 +162,10 @@ int main(void)
 
   while (1)
   {
+		
+
+		
+		
 		if (sel_pressed==1) {
 			//BSP_LED_Toggle(LED5);
 			if (FanState == SETPOINT) {
@@ -172,6 +179,7 @@ int main(void)
 		
 		if (up_pressed==1) {
 			//BSP_LED_Toggle(LED5);
+			
 			if (FanState == SETPOINT) {
 				setPoint += 0.5;
 			}
@@ -188,6 +196,7 @@ int main(void)
 		
 		switch (FanState) {
 			case SHOWTEMP:
+				Set_Duty(0);
 				displayTempString();
 				if (tempAboveSetPoint == 1) {
 					FanState = FANON;
@@ -198,8 +207,12 @@ int main(void)
 				displaySetPoint();
 				break;
 			case FANON:
-				if (ADC1ConvertedValue >= (setPoint * 1/0.02442)) {	// To maker sure that one dip below setPoint doesn't retain belowGood value
+				
+				if (ADC1ConvertedValue >= (setPoint * 1/0.02442)) {					// To maker sure that one dip below setPoint doesn't retain belowGood value
+					Diffrence = (ADC1ConvertedValue -(setPoint * 1/0.02442));
+					Set_Duty((Diffrence*30));
 					belowGood=0;
+					
 				}
 				if (ADC1ConvertedValue < (setPoint * 1/0.02442)) {
 					belowGood++;
@@ -209,6 +222,8 @@ int main(void)
 					FanState = SHOWTEMP;
 				}
 				break;
+
+				
 		}
 	
 	} //end of while 1
@@ -403,19 +418,19 @@ void TIM4_PWM_Config(void){
     Error_Handler();
   }
 
-  Tim4_OCInitStructure.OCMode       = TIM_OCMODE_PWM1;
-  Tim4_OCInitStructure.OCPolarity   = TIM_OCPOLARITY_HIGH;
-  Tim4_OCInitStructure.OCFastMode   = TIM_OCFAST_DISABLE;
-  Tim4_OCInitStructure.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
-  Tim4_OCInitStructure.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  PWMConfig.OCMode       = TIM_OCMODE_PWM1;
+  PWMConfig.OCPolarity   = TIM_OCPOLARITY_HIGH;
+  PWMConfig.OCFastMode   = TIM_OCFAST_DISABLE;
+  PWMConfig.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
+  PWMConfig.OCNIdleState = TIM_OCNIDLESTATE_RESET;
 
-  Tim4_OCInitStructure.OCIdleState  = TIM_OCIDLESTATE_RESET;
-	Tim4_OCInitStructure.Pulse = PULSE1_VALUE;	
+  PWMConfig.OCIdleState  = TIM_OCIDLESTATE_RESET;
+	PWMConfig.Pulse = PULSE1_VALUE;	
 	
 
 
   /* Set the pulse value for channel 1 */
-  if (HAL_TIM_PWM_ConfigChannel(&Tim4_Handle, &Tim4_OCInitStructure, TIM_CHANNEL_1) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&Tim4_Handle, &PWMConfig, TIM_CHANNEL_1) != HAL_OK)
   {
     /* Configuration Error */
     Error_Handler();
@@ -471,6 +486,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			//				break;
 			case GPIO_PIN_3:    //up button							
 				up_pressed=1;
+				PWMConfig.Pulse = (PERIOD_VALUE/30);
 				break;
 			case GPIO_PIN_5:    //down button						
 				down_pressed=1;
@@ -481,10 +497,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	  } 
 }
 
+void Set_Duty(double duty){
+		PWMConfig.Pulse = (PERIOD_VALUE*duty/100);
+		HAL_TIM_PWM_ConfigChannel(&Tim4_Handle, &PWMConfig, TIM_CHANNEL_1);
+		HAL_TIM_PWM_Start(&Tim4_Handle, TIM_CHANNEL_1);
+}
+
+
+
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32XXX_hal_tim.c for different callback function names. 
 {																																//for timer3 
+
 	BSP_LED_Toggle(LED5);
 	HAL_ADC_Start_DMA(&Adc_Handle,(uint32_t*)&ADC1ConvertedValue,1);
+
 }
  
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef * htim){  //this is for TIM4_pwm

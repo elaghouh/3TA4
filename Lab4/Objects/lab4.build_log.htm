@@ -22,14 +22,14 @@ Dialog DLL:      TCM.DLL V1.27.0.0
  
 <h2>Project:</h2>
 C:\Users\hesham\Desktop\3TA4\Lab4\lab4.uvprojx
-Project File Date:  11/11/2018
+Project File Date:  11/12/2018
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 4 (build 422)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'src'
-compiling stm32l4xx_hal_msp.c...
+compiling main.c...
 linking...
-Program Size: Code=19740 RO-data=580 RW-data=92 ZI-data=1500  
+Program Size: Code=20008 RO-data=580 RW-data=100 ZI-data=1500  
 FromELF: creating hex file...
 ".\Objects\lab4.axf" - 0 Error(s), 0 Warning(s).
 
@@ -43,10 +43,10 @@ Package Vendor: ARM
 
 Package Vendor: Keil
                 http://www.keil.com/pack/Keil.MDK-Middleware.7.4.0.pack
-                ::Board Support:Buttons:1.0.0 (API)
+                ::Board Support:LED:1.0.0 (API)
                 Middleware for Keil MDK-Professional and MDK-Plus
-   * Component: Buttons Version: 1.0.0
    * Component: LED Version: 1.0.0
+   * Component: Buttons Version: 1.0.0
 
 Package Vendor: Keil
                 http://www.keil.com/pack/Keil.STM32L4xx_DFP.1.4.0.pack
@@ -66,22 +66,22 @@ Package Vendor: Keil
 
    * Component: ARM::CMSIS:CORE:5.1.2
 
-   * Component: ::Board Support:Buttons:1.0.0 (API)
-      Include file:  Board\Board_Buttons.h
-
    * Component: ::Board Support:LED:1.0.0 (API)
       Include file:  Board\Board_LED.h
 
+   * Component: ::Board Support:Buttons:1.0.0 (API)
+      Include file:  Board\Board_Buttons.h
+
    * Component: Keil::Device:Startup:1.2.0
-      Source file:   Device\Source\ARM\startup_stm32l476xx.s
       Source file:   Device\Source\system_stm32l4xx.c
+      Source file:   Device\Source\ARM\startup_stm32l476xx.s
 
    * Component: Keil.STM32L476G-EVAL::Board Support:Buttons:1.0.0
       Source file:   Boards\ST\STM32L476G-EVAL\Common\Buttons_STM32L476G-EVAL.c
 
    * Component: Keil.STM32L476G-EVAL::Board Support:LED:1.0.0
       Source file:   Boards\ST\STM32L476G-EVAL\Common\LED_STM32L476G-EVAL.c
-Build Time Elapsed:  00:00:04
+Build Time Elapsed:  00:00:05
 </pre>
 </body>
 </html>
