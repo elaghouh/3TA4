@@ -84,7 +84,7 @@ char setPointString[6] = {0};
 double Diffrence = 0; 
 
 
-volatile double  setPoint=23.5;
+volatile double  setPoint=21.5;
 uint16_t tempAboveSetPoint = 0;
 uint16_t belowGood = 0;							// variable to make sure you are below setPoint for adequate time
 
@@ -142,7 +142,7 @@ int main(void)
 
 	HAL_InitTick(0x0000); // set systick's priority to the highest.
 
-	TIM3_CCR = 20000;
+	TIM3_CCR = 10000;
 	
 	BSP_LED_Init(LED4);
 	BSP_LED_Init(LED5);
@@ -169,6 +169,12 @@ int main(void)
 		if (sel_pressed==1) {
 			//BSP_LED_Toggle(LED5);
 			if (FanState == SETPOINT) {
+				Adc_Watchdog.HighThreshold = (setPoint * 1/0.02442);
+				if (HAL_ADC_AnalogWDGConfig(&Adc_Handle, &Adc_Watchdog) != HAL_OK)
+				{
+				/* Channel Configuration Error */
+					Error_Handler();
+				}
 				FanState = SHOWTEMP;
 			}
 			else {
@@ -207,10 +213,10 @@ int main(void)
 				displaySetPoint();
 				break;
 			case FANON:
-				
+				displayTempString();
 				if (ADC1ConvertedValue >= (setPoint * 1/0.02442)) {					// To maker sure that one dip below setPoint doesn't retain belowGood value
-					Diffrence = (ADC1ConvertedValue -(setPoint * 1/0.02442));
-					Set_Duty((Diffrence*30));
+					Diffrence = (ADCtoDegC(ADC1ConvertedValue) - setPoint);
+					Set_Duty((Diffrence)*20); 
 					belowGood=0;
 					
 				}
