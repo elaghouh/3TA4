@@ -216,8 +216,8 @@ int main(void)
 				displayTempString();
 				if (ADC1ConvertedValue >= (setPoint * 1/0.02442)) {					// To maker sure that one dip below setPoint doesn't retain belowGood value
 					Diffrence = (ADCtoDegC(ADC1ConvertedValue) - setPoint);
-					Set_Duty((Diffrence)*20); 
-					belowGood=0;
+					Set_Duty((Diffrence)*20); 															//PWM Duty cycle set as a linear function of temperature diffrence 
+					belowGood=0; 
 					
 				}
 				if (ADC1ConvertedValue < (setPoint * 1/0.02442)) {
@@ -424,7 +424,7 @@ void TIM4_PWM_Config(void){
     Error_Handler();
   }
 
-  PWMConfig.OCMode       = TIM_OCMODE_PWM1;
+  PWMConfig.OCMode       = TIM_OCMODE_PWM1;  	// Use PWM mode 1 
   PWMConfig.OCPolarity   = TIM_OCPOLARITY_HIGH;
   PWMConfig.OCFastMode   = TIM_OCFAST_DISABLE;
   PWMConfig.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
@@ -503,6 +503,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	  } 
 }
 
+// This fucntion udates the duty cycle 
 void Set_Duty(double duty){
 		PWMConfig.Pulse = (PERIOD_VALUE*duty/100);
 		HAL_TIM_PWM_ConfigChannel(&Tim4_Handle, &PWMConfig, TIM_CHANNEL_1);
