@@ -1,0 +1,10 @@
+ADC resolution: 12 bits -> 4095 steps
+
+temp sensor range: 2 deg C - 150 deg C
+
+temp sensor uncertainty: 0.5 deg C
+
+
+((temp range/ADC res)^2 + (uncert/res)^2)^1/2
+
+((148/4095)^2 + (0.5/4095)^2)^1/2
