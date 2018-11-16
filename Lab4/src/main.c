@@ -85,15 +85,12 @@ double Diffrence = 0;
 
 
 volatile double  setPoint=21.5;
-uint16_t tempAboveSetPoint = 0;
+uint16_t tempAboveSetPoint = 0;                 // Flag for ADC value above setPoint
 uint16_t belowGood = 0;							// variable to make sure you are below setPoint for adequate time
 
 double measuredTemp; 
 
 uint16_t PULSE1_VALUE = 0 ; 
-
-
-
 
 char lcd_buffer[6];    // LCD display buffer
 
@@ -161,16 +158,12 @@ int main(void)
 	
 
   while (1)
-  {
-		
-
-		
-		
+  {		
 		if (sel_pressed==1) {
 			//BSP_LED_Toggle(LED5);
 			if (FanState == SETPOINT) {
-				Adc_Watchdog.HighThreshold = (setPoint * 1/0.02442);
-				if (HAL_ADC_AnalogWDGConfig(&Adc_Handle, &Adc_Watchdog) != HAL_OK)
+				Adc_Watchdog.HighThreshold = (setPoint * 1/0.02442);                //To convert setPoint back to mV from deg C. deg C = (ADC converted value in mV)*0.02442
+				if (HAL_ADC_AnalogWDGConfig(&Adc_Handle, &Adc_Watchdog) != HAL_OK)  // You have to reconfigure watchdog to actually change the threshold
 				{
 				/* Channel Configuration Error */
 					Error_Handler();
@@ -217,14 +210,14 @@ int main(void)
 				if (ADC1ConvertedValue >= (setPoint * 1/0.02442)) {					// To maker sure that one dip below setPoint doesn't retain belowGood value
 					Diffrence = (ADCtoDegC(ADC1ConvertedValue) - setPoint);
 					Set_Duty((Diffrence)*20); 															//PWM Duty cycle set as a linear function of temperature diffrence 
-					belowGood=0; 
+					belowGood=0;            
 					
 				}
 				if (ADC1ConvertedValue < (setPoint * 1/0.02442)) {
 					belowGood++;
 				}
 				if (belowGood >= 10) {
-					belowGood = 0;
+					belowGood = 0;                                                  // Reset belowGood for next use
 					FanState = SHOWTEMP;
 				}
 				break;
@@ -311,6 +304,19 @@ void SystemClock_Config(void)
   __HAL_RCC_PWR_CLK_DISABLE();      
 }
 
+ 	/*
+	according to the reference manual of STM32f4Discovery, the Vref+ should =VDD=VDDA=3.0V, while Vref-=VSSA=0
+	so the voltage of 3V is mapped to 12 bits ADC result, which ranges from 0 to 4095.  
+	(althoug ADC_DR register is 16 bits, ADC converted result is just of 12bits)   
+	so the voltage resolution is 3/4095    
+	since the temperature is amplified 3 times before fed in MCU, the actual voltage from the temperature sensor is: 
+	ADC_convertedvalue* (3/4095) /3. 
+	
+	since the temperature sensor sensitity is 10mV/C ,that is:  (0.01V/C)
+	so the temperature is: ADC_convertedvalue* (3/4095) /3 /0.01 =ADC_convertedvalue * 0.02442
+	
+	*/
+
 double ADCtoDegC(uint32_t val)
 {
 	return (0.02442*val);
@@ -318,10 +324,11 @@ double ADCtoDegC(uint32_t val)
 
 void displayTempString(void)
 {	
-	measuredTemp = ADCtoDegC(ADC1ConvertedValue);
+	measuredTemp = ADCtoDegC(ADC1ConvertedValue);               // ADC converted value is in mV, must be converted to centigrade
 	sprintf(temperatureString, "%.1f", measuredTemp);
 	BSP_LCD_GLASS_DisplayString((uint8_t*)temperatureString);	
 }
+
 
 void displaySetPoint(void)
 {
@@ -371,8 +378,8 @@ void ADC_Config(void)
   }
   
   /* ### - 3 - Channel configuration ######################################## */
-  Adc_Channel.Channel      = ADC_CHANNEL_7;                /* Sampled channel number */
-  Adc_Channel.Rank         = ADC_REGULAR_RANK_1;          /* Rank of sampled channel number ADCx_CHANNEL */
+  Adc_Channel.Channel      = ADC_CHANNEL_7;                /* Pin PA2 is used, which maps to ADC1 & ADC 2 Channel 7. MUST CHOOSE THE CORRECT CHANNEL */
+  Adc_Channel.Rank         = ADC_REGULAR_RANK_1;          /* Rank of sampled channel number ADC_CHANNEL */
   Adc_Channel.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;    /* Sampling time (number of clock cycles unit) */
   Adc_Channel.SingleDiff   = ADC_SINGLE_ENDED;            /* Single-ended input channel */
   Adc_Channel.OffsetNumber = ADC_OFFSET_NONE;             /* No offset subtraction */ 
@@ -385,10 +392,10 @@ void ADC_Config(void)
 	/*### - 4 - Set up WatchDog ############################################### */
   /* Analog watchdog 1 configuration */
   Adc_Watchdog.WatchdogNumber = ADC_ANALOGWATCHDOG_1;
-  Adc_Watchdog.WatchdogMode = ADC_ANALOGWATCHDOG_ALL_REG;
-  Adc_Watchdog.Channel = ADC_CHANNEL_7;
-  Adc_Watchdog.ITMode = ENABLE;
-  Adc_Watchdog.HighThreshold = (setPoint * 1/0.02442);
+  Adc_Watchdog.WatchdogMode = ADC_ANALOGWATCHDOG_ALL_REG;          /* Read all registers. More important if we were watching multiple channels */
+  Adc_Watchdog.Channel = ADC_CHANNEL_7;                             /* ADC channel to watch */
+  Adc_Watchdog.ITMode = ENABLE;                                 /* Enabe interrupt when threshold is passed */
+  Adc_Watchdog.HighThreshold = (setPoint * 1/0.02442);          /* Must match threshold units with the units ADC is reading */
   if (HAL_ADC_AnalogWDGConfig(&Adc_Handle, &Adc_Watchdog) != HAL_OK)
   {
     /* Channel Configuration Error */
@@ -397,7 +404,8 @@ void ADC_Config(void)
 
 	
   /* ### - 5 - Start conversion in DMA mode ################################# */
-  if (HAL_ADC_Start_DMA(&Adc_Handle, (uint32_t*)&ADC1ConvertedValue, 1) != HAL_OK)
+  if (HAL_ADC_Start_DMA(&Adc_Handle, (uint32_t*)&ADC1ConvertedValue, 1) != HAL_OK)      /* Since continuous mode disabled, this will do one conversion only 
+                                                                                           when init function is called. Using DMA for ease of access  */
   {
 		BSP_LCD_GLASS_DisplayString((uint8_t*)"StrtX");
     Error_Handler();
@@ -462,7 +470,7 @@ void TIM3_Config(void)
 void TIM3_OC_Config(void)
 {
 	Tim3_OCInitStructure.OCMode = TIM_OCMODE_TIMING;
-	Tim3_OCInitStructure.Pulse = TIM3_CCR;		//20000/10000 = 0.5s
+	Tim3_OCInitStructure.Pulse = TIM3_CCR;		//10000/10000 = 1s
 	Tim3_OCInitStructure.OCPolarity = TIM_OCPOLARITY_HIGH;
 	
 	HAL_TIM_OC_Init(&Tim3_Handle);
@@ -516,7 +524,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef * htim) //see  stm32XXX_h
 {																																//for timer3 
 
 	BSP_LED_Toggle(LED5);
-	HAL_ADC_Start_DMA(&Adc_Handle,(uint32_t*)&ADC1ConvertedValue,1);
+	HAL_ADC_Start_DMA(&Adc_Handle,(uint32_t*)&ADC1ConvertedValue,1);        /* Only time ADC value is read after intialization of it */
 
 }
  
